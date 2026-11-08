@@ -2,7 +2,7 @@
   const { t, esc, sb, SUB, ABBR } = AFU;
   const app = document.getElementById("app");
   const TYPES = { modul: "soal", pembahasan: "pembahasan" };
-  const IG_DM = "https://ig.me/m/1khsanzz";
+  const IG_DM = "https://ig.me/m/afu.digital.library"; // tombol "Laporkan masalah" dan "Minta materi" membuka DM Instagram ini
   // Nilai awal; yang di Supabase (tabel site_settings, diatur dari admin) menimpa ini
   const S = { utbk_date: "2027-04-21T08:00:00+07:00", utbk_confirmed: "false", announcement: "" };
   const ICON = {
@@ -150,7 +150,7 @@
     <section class="promo" aria-labelledby="promoT">
       <div class="promo-art">
         <span class="spark sp1"></span><span class="spark sp2"></span><span class="spark sp3"></span>
-        <img src="assets/mascot-study.webp" alt="${esc(t("promo_alt"))}" width="800" height="711" loading="lazy" decoding="async">
+        <img src="/assets/mascot-study.webp" alt="${esc(t("promo_alt"))}" width="800" height="711" loading="lazy" decoding="async">
       </div>
       <div class="promo-txt">
         <h2 id="promoT">${esc(t("promo_a"))}<br><em>${esc(t("promo_b"))}<span class="swoosh" aria-hidden="true"><svg viewBox="0 0 300 14" preserveAspectRatio="none"><path d="M3 10C70 2 190 1 297 8"/></svg></span></em></h2>
@@ -312,7 +312,7 @@
       </section>`;
   }
 
-  // ---- router ----
+  // ---- router (tanpa #, pakai History API) ----
   function route() {
     clearInterval(cdTimer);
     const [type, sub] = location.pathname.split("/").filter(Boolean);
@@ -338,6 +338,7 @@
   if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
 
   AFU.init(() => { renderBanner(); route(); });
+
   // pindah halaman tanpa reload
   document.addEventListener("click", e => {
     const a = e.target.closest("a[href^='/']");
@@ -350,5 +351,6 @@
   window.addEventListener("popstate", route);
   // link lama (/#/modul/pu) diarahkan ke bentuk baru
   if (location.hash.startsWith("#/")) history.replaceState(null, "", location.hash.slice(1));
+
   loadSettings().finally(() => { renderBanner(); route(); });
 })();
