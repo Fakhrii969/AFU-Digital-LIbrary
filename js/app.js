@@ -2,7 +2,7 @@
   const { t, esc, sb, SUB, ABBR } = AFU;
   const app = document.getElementById("app");
   const TYPES = { modul: "soal", pembahasan: "pembahasan" };
-  const IG_DM = "https://ig.me/m/1khsanzz";
+  const IG_DM = "https://ig.me/m/afu.digital.library"; // tombol "Laporkan masalah" dan "Minta materi" membuka DM Instagram ini
   // Nilai awal; yang di Supabase (tabel site_settings, diatur dari admin) menimpa ini
   const S = { utbk_date: "2027-04-21T08:00:00+07:00", utbk_confirmed: "false", announcement: "" };
   const ICON = {
@@ -22,7 +22,7 @@
   };
   const cache = {};
   let cdTimer, page = "";
-
+ 
   // ---- data ----
   async function loadAll() {
     if (cache.all) return cache.all;
@@ -42,7 +42,7 @@
     if (!AFU.configured) return;
     try { const { data } = await sb.from("site_settings").select("key,value"); (data || []).forEach(r => (S[r.key] = r.value)); } catch (e) {}
   }
-
+ 
   // ---- util ----
   const msg = (text, cls = "") => `<div class="wrap"><p class="notice ${cls}">${esc(text)}</p></div>`;
   const title = type => (type === "modul" ? t("modul_t") : t("pemb_t"));
@@ -51,7 +51,7 @@
   const favs = () => { try { return JSON.parse(localStorage.getItem("afu-fav")) || []; } catch (e) { return []; } };
   const saveFavs = a => { try { localStorage.setItem("afu-fav", JSON.stringify(a)); } catch (e) {} };
   const updFavN = () => { const n = favs().length, el = document.getElementById("favN"); if (el) el.textContent = n ? n : ""; };
-
+ 
   function toast(text) {
     let el = document.getElementById("toast");
     if (!el) { el = document.createElement("div"); el.id = "toast"; el.setAttribute("role", "status"); document.body.appendChild(el); }
@@ -72,7 +72,7 @@
     updFavN();
     if (page === "favorit" && !on) setTimeout(favPage, 250);
   });
-
+ 
   // ---- kartu dokumen ----
   function docCard(d, tag) {
     const loc = AFU.lang === "id" ? "id-ID" : "en-US";
@@ -100,7 +100,7 @@
         </div>
       </article>`;
   }
-
+ 
   // ---- pengumuman ----
   function renderBanner() {
     const b = document.getElementById("banner"), txt = (S.announcement || "").trim();
@@ -110,7 +110,7 @@
     b.innerHTML = `<div class="wrap banner-in"><span>${esc(txt)}</span><button type="button" id="banX" aria-label="${esc(t("close"))}">×</button></div>`;
     document.getElementById("banX").onclick = () => { try { sessionStorage.setItem("afu-ban", txt); } catch (e) {} b.hidden = true; };
   }
-
+ 
   // ---- hitung mundur ----
   function countdownHTML() {
     const ms = new Date(S.utbk_date).getTime(); if (isNaN(ms)) return "";
@@ -139,12 +139,12 @@
     };
     clearInterval(cdTimer); tick(); cdTimer = setInterval(tick, 1000);
   }
-
+ 
   // ---- beranda ----
   const HEX = [[180, 175], [296, 175], [238, 273], [122, 273], [64, 175], [122, 77], [238, 77]];
   const honey = () => `<div class="honey">${HEX.map(([x, y], i) =>
     `<a class="hex" href="#/modul/${SUB[i]}" title="${esc(t("s_" + SUB[i]))}" aria-label="${esc(t("s_" + SUB[i]))}" style="left:${x - 55}px;top:${y - 63}px;--c:var(--b${i + 1});--d:${i * 80}ms">${ABBR[SUB[i]]}</a>`).join("")}</div>`;
-
+ 
   // ---- promo "belajar di mana saja" ----
   const promoHTML = () => `
     <section class="promo" aria-labelledby="promoT">
@@ -158,7 +158,7 @@
         <a class="btn promo-btn" href="#/modul">${esc(t("promo_btn"))}${ICON.arrow}</a>
       </div>
     </section>`;
-
+ 
   function home() {
     app.innerHTML = `
       <section class="hero"><div class="wrap hero-in">
@@ -215,7 +215,7 @@
       stagger();
     } catch (e) { box.innerHTML = `<p class="notice warn">${esc(t("err"))}</p>`; }
   }
-
+ 
   // ---- daftar subtes (rak buku) ----
   async function subtests(type) {
     if (!AFU.configured) return (app.innerHTML = msg(t("nocfg"), "warn"));
@@ -236,7 +236,7 @@
       </section>`;
     stagger();
   }
-
+ 
   // ---- halaman dokumen: filter kategori, cari, urutkan ----
   async function docsPage(type, sub) {
     if (!AFU.configured) return (app.innerHTML = msg(t("nocfg"), "warn"));
@@ -283,7 +283,7 @@
     });
     draw();
   }
-
+ 
   // ---- favorit ----
   async function favPage() {
     if (!AFU.configured) return (app.innerHTML = msg(t("nocfg"), "warn"));
@@ -298,7 +298,7 @@
       </section>`;
     stagger();
   }
-
+ 
   // ---- tentang + FAQ ----
   function aboutPage() {
     app.innerHTML = `
@@ -311,7 +311,7 @@
         <div class="faq">${[1, 2, 3, 4, 5, 6].map(n => `<details><summary>${esc(t("q" + n))}</summary><p>${esc(t("a" + n))}</p></details>`).join("")}</div>
       </section>`;
   }
-
+ 
   // ---- router ----
   function route() {
     clearInterval(cdTimer);
@@ -328,7 +328,7 @@
     if (!SUB.includes(sub)) return subtests(type);
     return docsPage(type, sub);
   }
-
+ 
   // ---- PWA ----
   let installEvt;
   window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; document.getElementById("installBtn").hidden = false; });
@@ -336,8 +336,9 @@
     if (!installEvt) return; installEvt.prompt(); await installEvt.userChoice; installEvt = null; document.getElementById("installBtn").hidden = true;
   });
   if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
-
+ 
   AFU.init(() => { renderBanner(); route(); });
   window.addEventListener("hashchange", route);
   loadSettings().finally(() => { renderBanner(); route(); });
 })();
+ 
