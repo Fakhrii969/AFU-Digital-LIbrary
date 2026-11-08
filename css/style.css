@@ -278,7 +278,7 @@ a.card:active{transform:scale(.985)}
 .brand-bg{position:absolute;inset:0;overflow:hidden;pointer-events:none}
 .brand-bg::before{content:"";position:absolute;left:-10%;top:-70%;width:48%;height:210%;border-radius:50%;background:color-mix(in srgb,var(--accent) 9%,transparent);transform:rotate(-20deg)}
 .brand-bg::after{content:"";position:absolute;right:-12%;top:-45%;width:62%;height:190%;border-radius:46% 54% 38% 62%;background:linear-gradient(120deg,color-mix(in srgb,var(--accent-2) 15%,transparent),transparent 72%);transform:rotate(14deg)}
-.mascot{position:absolute;right:20rem;bottom:-2.6rem;height:clamp(150px,18vw,210px);width:auto;z-index:2;pointer-events:none;filter:drop-shadow(0 10px 12px rgba(15,31,77,.16));transform-origin:50% 90%;animation:mascotIn .7s .25s backwards cubic-bezier(.2,1.4,.4,1)}
+.mascot{position:absolute;right:13rem;bottom:-2.6rem;height:clamp(150px,18vw,210px);width:auto;z-index:2;pointer-events:none;filter:drop-shadow(0 10px 12px rgba(15,31,77,.16));transform-origin:50% 90%;animation:mascotIn .7s .25s backwards cubic-bezier(.2,1.4,.4,1)}
 @keyframes mascotIn{from{opacity:0;transform:translateY(24px) rotate(-8deg) scale(.9)}}
 [data-theme=dark] .mascot{filter:drop-shadow(0 10px 14px rgba(0,0,0,.45))}
 
