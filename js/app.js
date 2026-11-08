@@ -315,7 +315,7 @@
   // ---- router ----
   function route() {
     clearInterval(cdTimer);
-    const [type, sub] = location.hash.replace(/^#\/?/, "").split("/").filter(Boolean);
+    const [type, sub] = location.pathname.replace(/^\/?/, "").split("/").filter(Boolean);
     page = type || "";
     window.scrollTo(0, 0);
     window.goatcounter?.count?.({ path: "/" + location.hash.replace(/^#\/?/, "") });
