@@ -3,10 +3,10 @@ const AFU = (() => {
   const C = window.AFU_CONFIG;
   const configured = C.SUPABASE_URL && !C.SUPABASE_URL.startsWith("ISI_");
   const sb = configured ? supabase.createClient(C.SUPABASE_URL, C.SUPABASE_ANON_KEY) : null;
-
+ 
   const SUB = ["pu", "ppu", "pbm", "pk", "lbi", "lbe", "pm"];
   const ABBR = { pu: "PU", ppu: "PPU", pbm: "PBM", pk: "PK", lbi: "LBI", lbe: "LBE", pm: "PM" };
-
+ 
   const D = {
     id: {
       nav_home: "Beranda", nav_modul: "Modul Soal", nav_pemb: "Pembahasan", nav_fav: "Favorit", nav_about: "Tentang",
@@ -24,6 +24,9 @@ const AFU = (() => {
       f_sub: "Digital Library by AFU", f_rights: "© 2026 AFU Digital Library. All rights reserved.",
       f_ig: "Dukung AFU Library Digital dengan follow instagram kami, biar kami makin semangat berkembang!",
       tagline: "Learn Better, Prepare Smarter.",
+      f_desc: "Dapatkan info materi dan update terbaru dengan follow sosial media kami.",
+      f_contact: "Hubungi kami", f_c_ig: "Follow Instagram kami", f_c_tt: "Ikuti TikTok kami",
+      f_c_wa: "Chat WhatsApp jika butuh bantuan", f_c_em: "Kirim email jika perlu sesuatu",
       s_pu: "Penalaran Umum", s_ppu: "Pengetahuan dan Pemahaman Umum", s_pbm: "Pemahaman Bacaan dan Menulis",
       s_pk: "Pengetahuan Kuantitatif", s_lbi: "Literasi dalam Bahasa Indonesia",
       s_lbe: "Literasi dalam Bahasa Inggris", s_pm: "Penalaran Matematika",
@@ -80,6 +83,9 @@ const AFU = (() => {
       f_sub: "Digital Library by AFU", f_rights: "© 2026 AFU Digital Library. All rights reserved.",
       f_ig: "Support AFU Digital Library by following our Instagram, so we can stay motivated to grow!",
       tagline: "Learn Better, Prepare Smarter.",
+      f_desc: "Get the latest materials and updates by following our social media.",
+      f_contact: "Contact us", f_c_ig: "Follow our Instagram", f_c_tt: "Follow our TikTok",
+      f_c_wa: "Chat on WhatsApp if you need help", f_c_em: "Send an email if you need anything",
       s_pu: "General Reasoning", s_ppu: "General Knowledge and Understanding", s_pbm: "Reading Comprehension and Writing",
       s_pk: "Quantitative Knowledge", s_lbi: "Indonesian Language Literacy",
       s_lbe: "English Language Literacy", s_pm: "Mathematical Reasoning",
@@ -121,10 +127,10 @@ const AFU = (() => {
       q6: "Can I install it like an app?", a6: "Yes. Android (Chrome): three-dot menu, then Add to Home screen, or the Install app button at the bottom of the page. iPhone (Safari): Share, then Add to Home Screen."
     }
   };
-
+ 
   let lang = localStorage.getItem("afu-lang") || "id";
   const t = (k, ...a) => { const v = D[lang][k]; return typeof v === "function" ? v(...a) : v ?? k; };
-
+ 
   function applyStatic() {
     document.documentElement.lang = lang;
     document.querySelectorAll("[data-i18n]").forEach(el => (el.textContent = t(el.dataset.i18n)));
@@ -138,10 +144,10 @@ const AFU = (() => {
     const n = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
     document.documentElement.dataset.theme = n; localStorage.setItem("afu-theme", n);
   }
-
+ 
   // efek riak saat tombol/kartu ditekan
   document.addEventListener("pointerdown", e => {
-    const el = e.target.closest(".btn,.icon-btn,.nav a,a.card,.chip,.fav,.ig");
+    const el = e.target.closest(".btn,.icon-btn,.nav a,a.card,.chip,.fav,.ig,.soc");
     if (!el) return;
     const r = el.getBoundingClientRect(), d = Math.max(r.width, r.height) * 2;
     const s = document.createElement("span");
@@ -149,7 +155,7 @@ const AFU = (() => {
     s.style.cssText = `width:${d}px;height:${d}px;left:${e.clientX - r.left - d / 2}px;top:${e.clientY - r.top - d / 2}px`;
     el.appendChild(s); setTimeout(() => s.remove(), 650);
   });
-
+ 
   function init(cb) {
     onChange = cb || onChange;
     applyStatic();
@@ -159,7 +165,7 @@ const AFU = (() => {
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const url = (path, dl) => sb.storage.from(C.BUCKET).getPublicUrl(path, dl ? { download: dl } : undefined).data.publicUrl;
   const fmtSize = n => (!n ? "" : n < 1048576 ? Math.round(n / 1024) + " KB" : (n / 1048576).toFixed(1) + " MB");
-
+ 
   // Statistik pengunjung (opsional, tanpa cookie) lewat GoatCounter
   if (C.GOATCOUNTER) {
     const g = document.createElement("script");
@@ -169,6 +175,7 @@ const AFU = (() => {
     g.onload = () => window.goatcounter?.count?.({ path: "/" + location.hash.replace(/^#\/?/, "") });
     document.head.appendChild(g);
   }
-
+ 
   return { C, sb, fmtSize, configured, SUB, ABBR, t, init, esc, url, get lang() { return lang; } };
 })();
+ 
