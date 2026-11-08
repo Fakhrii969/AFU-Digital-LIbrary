@@ -2,7 +2,7 @@
   const { t, esc, sb, SUB, ABBR } = AFU;
   const app = document.getElementById("app");
   const TYPES = { modul: "soal", pembahasan: "pembahasan" };
-  const IG_DM = "https://ig.me/m/afu.digital.library"; // tombol "Laporkan masalah" dan "Minta materi" membuka DM Instagram ini
+  const IG_DM = "https://ig.me/m/1khsanzz";
   // Nilai awal; yang di Supabase (tabel site_settings, diatur dari admin) menimpa ini
   const S = { utbk_date: "2027-04-21T08:00:00+07:00", utbk_confirmed: "false", announcement: "" };
   const ICON = {
@@ -22,7 +22,7 @@
   };
   const cache = {};
   let cdTimer, page = "";
- 
+
   // ---- data ----
   async function loadAll() {
     if (cache.all) return cache.all;
@@ -42,7 +42,7 @@
     if (!AFU.configured) return;
     try { const { data } = await sb.from("site_settings").select("key,value"); (data || []).forEach(r => (S[r.key] = r.value)); } catch (e) {}
   }
- 
+
   // ---- util ----
   const msg = (text, cls = "") => `<div class="wrap"><p class="notice ${cls}">${esc(text)}</p></div>`;
   const title = type => (type === "modul" ? t("modul_t") : t("pemb_t"));
@@ -51,7 +51,7 @@
   const favs = () => { try { return JSON.parse(localStorage.getItem("afu-fav")) || []; } catch (e) { return []; } };
   const saveFavs = a => { try { localStorage.setItem("afu-fav", JSON.stringify(a)); } catch (e) {} };
   const updFavN = () => { const n = favs().length, el = document.getElementById("favN"); if (el) el.textContent = n ? n : ""; };
- 
+
   function toast(text) {
     let el = document.getElementById("toast");
     if (!el) { el = document.createElement("div"); el.id = "toast"; el.setAttribute("role", "status"); document.body.appendChild(el); }
@@ -72,7 +72,7 @@
     updFavN();
     if (page === "favorit" && !on) setTimeout(favPage, 250);
   });
- 
+
   // ---- kartu dokumen ----
   function docCard(d, tag) {
     const loc = AFU.lang === "id" ? "id-ID" : "en-US";
@@ -100,7 +100,7 @@
         </div>
       </article>`;
   }
- 
+
   // ---- pengumuman ----
   function renderBanner() {
     const b = document.getElementById("banner"), txt = (S.announcement || "").trim();
@@ -110,7 +110,7 @@
     b.innerHTML = `<div class="wrap banner-in"><span>${esc(txt)}</span><button type="button" id="banX" aria-label="${esc(t("close"))}">×</button></div>`;
     document.getElementById("banX").onclick = () => { try { sessionStorage.setItem("afu-ban", txt); } catch (e) {} b.hidden = true; };
   }
- 
+
   // ---- hitung mundur ----
   function countdownHTML() {
     const ms = new Date(S.utbk_date).getTime(); if (isNaN(ms)) return "";
@@ -139,12 +139,12 @@
     };
     clearInterval(cdTimer); tick(); cdTimer = setInterval(tick, 1000);
   }
- 
+
   // ---- beranda ----
   const HEX = [[180, 175], [296, 175], [238, 273], [122, 273], [64, 175], [122, 77], [238, 77]];
   const honey = () => `<div class="honey">${HEX.map(([x, y], i) =>
-    `<a class="hex" href="#/modul/${SUB[i]}" title="${esc(t("s_" + SUB[i]))}" aria-label="${esc(t("s_" + SUB[i]))}" style="left:${x - 55}px;top:${y - 63}px;--c:var(--b${i + 1});--d:${i * 80}ms">${ABBR[SUB[i]]}</a>`).join("")}</div>`;
- 
+    `<a class="hex" href="/modul/${SUB[i]}" title="${esc(t("s_" + SUB[i]))}" aria-label="${esc(t("s_" + SUB[i]))}" style="left:${x - 55}px;top:${y - 63}px;--c:var(--b${i + 1});--d:${i * 80}ms">${ABBR[SUB[i]]}</a>`).join("")}</div>`;
+
   // ---- promo "belajar di mana saja" ----
   const promoHTML = () => `
     <section class="promo" aria-labelledby="promoT">
@@ -155,10 +155,10 @@
       <div class="promo-txt">
         <h2 id="promoT">${esc(t("promo_a"))}<br><em>${esc(t("promo_b"))}<span class="swoosh" aria-hidden="true"><svg viewBox="0 0 300 14" preserveAspectRatio="none"><path d="M3 10C70 2 190 1 297 8"/></svg></span></em></h2>
         <p>${esc(t("promo_d"))}</p>
-        <a class="btn promo-btn" href="#/modul">${esc(t("promo_btn"))}${ICON.arrow}</a>
+        <a class="btn promo-btn" href="/modul">${esc(t("promo_btn"))}${ICON.arrow}</a>
       </div>
     </section>`;
- 
+
   function home() {
     app.innerHTML = `
       <section class="hero"><div class="wrap hero-in">
@@ -174,9 +174,9 @@
       <section class="wrap choose">
         <h2 class="sr">${esc(t("choose"))}</h2>
         <div class="grid2">
-          <a class="card big" href="#/modul"><span class="ico">${ICON.book}</span>
+          <a class="card big" href="/modul"><span class="ico">${ICON.book}</span>
             <h3>${esc(t("modul_t"))}</h3><p>${esc(t("modul_d"))}</p><span class="go">${esc(t("open"))}${ICON.next}</span></a>
-          <a class="card big alt" href="#/pembahasan"><span class="ico">${ICON.doc}</span>
+          <a class="card big alt" href="/pembahasan"><span class="ico">${ICON.doc}</span>
             <h3>${esc(t("pemb_t"))}</h3><p>${esc(t("pemb_d"))}</p><span class="go">${esc(t("open"))}${ICON.next}</span></a>
         </div>
         <div id="latest"></div>
@@ -215,7 +215,7 @@
       stagger();
     } catch (e) { box.innerHTML = `<p class="notice warn">${esc(t("err"))}</p>`; }
   }
- 
+
   // ---- daftar subtes (rak buku) ----
   async function subtests(type) {
     if (!AFU.configured) return (app.innerHTML = msg(t("nocfg"), "warn"));
@@ -224,11 +224,11 @@
     try { docs = await load(TYPES[type]); } catch (e) { return (app.innerHTML = msg(t("err"), "warn")); }
     app.innerHTML = `
       <section class="wrap page">
-        <a class="back" href="#/">${ICON.back}${esc(t("back"))}</a>
+        <a class="back" href="/">${ICON.back}${esc(t("back"))}</a>
         <h1>${esc(title(type))}</h1><p class="lead sm">${esc(t("pick_sub"))}</p>
         <div class="shelf">${SUB.map((k, i) => {
           const n = docs.filter(d => d.subtest === k).length;
-          return `<a class="card book" href="#/${type}/${k}" style="--c:var(--b${i + 1})">
+          return `<a class="card book" href="/${type}/${k}" style="--c:var(--b${i + 1})">
             <span class="spine"><b>${ABBR[k]}</b></span>
             <span class="bk"><h3>${esc(t("s_" + k))}</h3><span class="muted">${esc(t("docs_count", n))}</span></span>
             <span class="arrow">${ICON.next}</span></a>`;
@@ -236,7 +236,7 @@
       </section>`;
     stagger();
   }
- 
+
   // ---- halaman dokumen: filter kategori, cari, urutkan ----
   async function docsPage(type, sub) {
     if (!AFU.configured) return (app.innerHTML = msg(t("nocfg"), "warn"));
@@ -249,7 +249,7 @@
     const st = { cat: "", sort: "new", q: "" };
     app.innerHTML = `
       <section class="wrap page">
-        <a class="back" href="#/${type}">${ICON.back}${esc(title(type))}</a>
+        <a class="back" href="/${type}">${ICON.back}${esc(title(type))}</a>
         <h1 class="sub-h" style="--c:var(--b${idx})"><span class="badge lg">${ABBR[sub]}</span> ${esc(t("s_" + sub))}</h1>
         <p class="sub-d">${esc(t("sd_" + sub))}</p>
         ${docs.length ? `<div class="toolbar">
@@ -283,7 +283,7 @@
     });
     draw();
   }
- 
+
   // ---- favorit ----
   async function favPage() {
     if (!AFU.configured) return (app.innerHTML = msg(t("nocfg"), "warn"));
@@ -291,19 +291,19 @@
     const list = favs().map(id => cache.byId[id]).filter(Boolean);
     app.innerHTML = `
       <section class="wrap page">
-        <a class="back" href="#/">${ICON.back}${esc(t("back"))}</a>
+        <a class="back" href="/">${ICON.back}${esc(t("back"))}</a>
         <h1>${esc(t("fav_t"))}</h1><p class="lead sm">${esc(t("fav_note"))}</p>
         ${list.length ? `<div class="grid2">${list.map(d => docCard(d, `${t(d.type === "soal" ? "modul_t" : "pemb_t")} · ${ABBR[d.subtest]}`)).join("")}</div>`
           : `<p class="notice">${esc(t("fav_empty"))}</p>`}
       </section>`;
     stagger();
   }
- 
+
   // ---- tentang + FAQ ----
   function aboutPage() {
     app.innerHTML = `
       <section class="wrap page narrow-p">
-        <a class="back" href="#/">${ICON.back}${esc(t("back"))}</a>
+        <a class="back" href="/">${ICON.back}${esc(t("back"))}</a>
         <h1>${esc(t("about_t"))}</h1><p class="lead sm">${esc(t("about_p"))}</p>
         <div class="req card"><div><h3>${esc(t("request"))}</h3><p>${esc(t("request_d"))}</p></div>
           <a class="btn" href="${IG_DM}" target="_blank" rel="noopener">${ICON.chat}${esc(t("request"))}</a></div>
@@ -311,15 +311,15 @@
         <div class="faq">${[1, 2, 3, 4, 5, 6].map(n => `<details><summary>${esc(t("q" + n))}</summary><p>${esc(t("a" + n))}</p></details>`).join("")}</div>
       </section>`;
   }
- 
+
   // ---- router ----
   function route() {
     clearInterval(cdTimer);
-    const [type, sub] = location.pathname.replace(/^\/?/, "").split("/").filter(Boolean);
+    const [type, sub] = location.pathname.split("/").filter(Boolean);
     page = type || "";
     window.scrollTo(0, 0);
-    window.goatcounter?.count?.({ path: "/" + location.hash.replace(/^#\/?/, "") });
-    document.querySelectorAll(".nav a").forEach(a => a.classList.toggle("on", a.getAttribute("href") === "#/" + (page && (TYPES[page] || page === "favorit" || page === "tentang") ? page : "")));
+    window.goatcounter?.count?.({ path: location.pathname });
+    document.querySelectorAll(".nav a").forEach(a => a.classList.toggle("on", a.getAttribute("href") === "/" + (page && (TYPES[page] || page === "favorit" || page === "tentang") ? page : "")));
     app.classList.remove("enter"); void app.offsetWidth; app.classList.add("enter");
     updFavN();
     if (page === "favorit") return favPage();
@@ -328,17 +328,27 @@
     if (!SUB.includes(sub)) return subtests(type);
     return docsPage(type, sub);
   }
- 
+
   // ---- PWA ----
   let installEvt;
   window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; document.getElementById("installBtn").hidden = false; });
   document.getElementById("installBtn").addEventListener("click", async () => {
     if (!installEvt) return; installEvt.prompt(); await installEvt.userChoice; installEvt = null; document.getElementById("installBtn").hidden = true;
   });
-  if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
- 
+  if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
+
   AFU.init(() => { renderBanner(); route(); });
-  window.addEventListener("hashchange", route);
+  // pindah halaman tanpa reload
+  document.addEventListener("click", e => {
+    const a = e.target.closest("a[href^='/']");
+    if (!a || a.target || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey) return;
+    if (a.getAttribute("href").startsWith("/admin")) return;
+    e.preventDefault();
+    history.pushState(null, "", a.getAttribute("href"));
+    route();
+  });
+  window.addEventListener("popstate", route);
+  // link lama (/#/modul/pu) diarahkan ke bentuk baru
+  if (location.hash.startsWith("#/")) history.replaceState(null, "", location.hash.slice(1));
   loadSettings().finally(() => { renderBanner(); route(); });
 })();
- 
