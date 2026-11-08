@@ -3,10 +3,10 @@ const AFU = (() => {
   const C = window.AFU_CONFIG;
   const configured = C.SUPABASE_URL && !C.SUPABASE_URL.startsWith("ISI_");
   const sb = configured ? supabase.createClient(C.SUPABASE_URL, C.SUPABASE_ANON_KEY) : null;
- 
+
   const SUB = ["pu", "ppu", "pbm", "pk", "lbi", "lbe", "pm"];
   const ABBR = { pu: "PU", ppu: "PPU", pbm: "PBM", pk: "PK", lbi: "LBI", lbe: "LBE", pm: "PM" };
- 
+
   const D = {
     id: {
       nav_home: "Beranda", nav_modul: "Modul Soal", nav_pemb: "Pembahasan", nav_fav: "Favorit", nav_about: "Tentang",
@@ -127,10 +127,10 @@ const AFU = (() => {
       q6: "Can I install it like an app?", a6: "Yes. Android (Chrome): three-dot menu, then Add to Home screen, or the Install app button at the bottom of the page. iPhone (Safari): Share, then Add to Home Screen."
     }
   };
- 
+
   let lang = localStorage.getItem("afu-lang") || "id";
   const t = (k, ...a) => { const v = D[lang][k]; return typeof v === "function" ? v(...a) : v ?? k; };
- 
+
   function applyStatic() {
     document.documentElement.lang = lang;
     document.querySelectorAll("[data-i18n]").forEach(el => (el.textContent = t(el.dataset.i18n)));
@@ -144,7 +144,7 @@ const AFU = (() => {
     const n = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
     document.documentElement.dataset.theme = n; localStorage.setItem("afu-theme", n);
   }
- 
+
   // efek riak saat tombol/kartu ditekan
   document.addEventListener("pointerdown", e => {
     const el = e.target.closest(".btn,.icon-btn,.nav a,a.card,.chip,.fav,.ig,.soc");
@@ -155,7 +155,7 @@ const AFU = (() => {
     s.style.cssText = `width:${d}px;height:${d}px;left:${e.clientX - r.left - d / 2}px;top:${e.clientY - r.top - d / 2}px`;
     el.appendChild(s); setTimeout(() => s.remove(), 650);
   });
- 
+
   function init(cb) {
     onChange = cb || onChange;
     applyStatic();
@@ -165,17 +165,16 @@ const AFU = (() => {
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const url = (path, dl) => sb.storage.from(C.BUCKET).getPublicUrl(path, dl ? { download: dl } : undefined).data.publicUrl;
   const fmtSize = n => (!n ? "" : n < 1048576 ? Math.round(n / 1024) + " KB" : (n / 1048576).toFixed(1) + " MB");
- 
+
   // Statistik pengunjung (opsional, tanpa cookie) lewat GoatCounter
   if (C.GOATCOUNTER) {
     const g = document.createElement("script");
     g.async = true; g.src = "https://gc.zgo.at/count.js";
     g.dataset.goatcounter = `https://${C.GOATCOUNTER}.goatcounter.com/count`;
     g.dataset.goatcounterSettings = '{"no_onload":true}';
-    g.onload = () => window.goatcounter?.count?.({ path: "/" + location.hash.replace(/^#\/?/, "") });
+    g.onload = () => window.goatcounter?.count?.({ path: location.pathname });
     document.head.appendChild(g);
   }
- 
+
   return { C, sb, fmtSize, configured, SUB, ABBR, t, init, esc, url, get lang() { return lang; } };
 })();
- 
