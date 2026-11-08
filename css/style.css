@@ -343,7 +343,7 @@ a.card:active{transform:scale(.985)}
 @media(max-width:560px){
   /* di HP: maskot di bawah tombol tema/bahasa, tidak menutupi menu */
   .hero-brand .wrap{min-height:128px}
-  .mascot{right:0;bottom:-2.4rem;height:80px}
+  .mascot{right:0;bottom:-2.8rem;height:80px}
 }
 @media(max-width:380px){.mascot{height:68px}.logo img{height:92px}}
 
