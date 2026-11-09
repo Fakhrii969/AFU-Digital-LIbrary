@@ -785,33 +785,28 @@ a.card:hover,.st:hover{border-color:var(--accent);box-shadow:var(--shadow-lg),0 
 [data-theme=dark] .btn.tb-btn:not(.ghost){background:#fff;color:#1f2f9a}
 .btn.promo-btn:not(.ghost){background:linear-gradient(135deg,var(--accent),var(--accent-2));box-shadow:0 12px 26px -8px var(--glow)}
 
-/* ================= v8: aurora + efek kursor (kartu miring, cahaya sorot, tombol magnetik, heksagon) ================= */
+/* ================= v8: aurora ikut kursor + semua kartu miring menghadap kursor ================= */
 
-/* ---------- warna aurora (mengikuti palet biru AFU) ---------- */
-:root{--au1:rgba(39,87,232,.34);--au2:rgba(15,179,240,.30);--au3:rgba(124,82,242,.28);--au4:rgba(255,159,67,.22)}
-[data-theme=dark]{--au1:rgba(79,110,255,.42);--au2:rgba(34,200,255,.26);--au3:rgba(140,92,255,.36);--au4:rgba(255,140,60,.14)}
+/* ---------- warna aurora (palet biru AFU) ---------- */
+:root{--au1:rgba(39,87,232,.40);--au2:rgba(15,179,240,.36);--au3:rgba(124,82,242,.32);--au4:rgba(255,159,67,.28)}
+[data-theme=dark]{--au1:rgba(79,110,255,.48);--au2:rgba(34,200,255,.32);--au3:rgba(140,92,255,.42);--au4:rgba(255,140,60,.20)}
 
-/* ---------- latar aurora: menimpa latar statis v7 ---------- */
-body::before,[data-theme=dark] body::before{content:"";position:fixed;inset:-25%;z-index:-1;pointer-events:none;will-change:transform;filter:blur(34px);
-  background:
-    radial-gradient(38% 32% at 18% 22%,var(--au1),transparent 70%),
-    radial-gradient(34% 30% at 82% 18%,var(--au2),transparent 70%),
-    radial-gradient(40% 34% at 70% 85%,var(--au3),transparent 70%),
-    radial-gradient(30% 28% at 15% 80%,var(--au4),transparent 70%);
-  animation:aurora 26s ease-in-out infinite alternate}
-@keyframes aurora{to{transform:translate3d(4%,3%,0) rotate(8deg) scale(1.1)}}
-@media(max-width:640px){body::before,[data-theme=dark] body::before{animation:none;filter:blur(24px)}}
+/* ---------- aurora: 4 gumpalan cahaya, digeser JS mengikuti kursor ---------- */
+html.has-aurora body::before{content:none;display:none}
+.aurora{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+.aurora i{position:absolute;border-radius:50%;filter:blur(64px);will-change:transform;animation:auroraDrift 20s ease-in-out infinite alternate}
+.aurora i:nth-child(1){left:-12%;top:-14%;width:56vmax;height:46vmax;background:radial-gradient(closest-side,var(--au1),transparent)}
+.aurora i:nth-child(2){right:-12%;top:-10%;width:50vmax;height:42vmax;background:radial-gradient(closest-side,var(--au2),transparent);animation-duration:24s;animation-direction:alternate-reverse}
+.aurora i:nth-child(3){right:-8%;bottom:-16%;width:54vmax;height:44vmax;background:radial-gradient(closest-side,var(--au3),transparent);animation-duration:27s}
+.aurora i:nth-child(4){left:-10%;bottom:-14%;width:46vmax;height:40vmax;background:radial-gradient(closest-side,var(--au4),transparent);animation-duration:22s;animation-direction:alternate-reverse}
+@keyframes auroraDrift{to{transform:translate3d(5vw,4vh,0) scale(1.12)}}
+@media(hover:none){.aurora i{animation:none;filter:blur(44px)}}
+@media(prefers-reduced-motion:reduce){.aurora i{animation:none!important}}
 
-/* ---------- kartu: cahaya sorot mengikuti kursor ---------- */
-.card.big,.card.book,.card.doc,.card.to-card{position:relative;isolation:isolate}
-.card.big::before,.card.book::before,.card.doc::before,.card.to-card::before{content:"";position:absolute;inset:0;z-index:-1;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .25s;
-  background:radial-gradient(420px circle at var(--mx,50%) var(--my,50%),color-mix(in srgb,var(--accent-2) 26%,transparent),transparent 60%)}
-.card.big:hover::before,.card.book:hover::before,.card.doc:hover::before,.card.to-card:hover::before{opacity:1}
-
-/* ---------- kartu miring ikut kursor (hanya mouse di desktop) ---------- */
+/* ---------- semua kartu miring menghadap kursor (nilai --rx / --ry diisi JS) ---------- */
 @media(hover:hover) and (pointer:fine){
   a.card.big,a.card.book,a.card.to-card,.card.doc{transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .25s ease-out,border-color .2s,box-shadow .2s}
-  a.card.big:hover,a.card.book:hover,a.card.to-card:hover,.card.doc:hover{transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) translateY(-3px);box-shadow:var(--shadow-lg),0 0 0 3px var(--glow),inset 0 1px 0 var(--hl)}
+  a.card.big:hover,a.card.book:hover,a.card.to-card:hover,.card.doc:hover{transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) translateY(-3px)}
   a.card.big:active,a.card.book:active,a.card.to-card:active{transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) scale(.985)}
 }
 
@@ -830,5 +825,3 @@ body::before,[data-theme=dark] body::before{content:"";position:fixed;inset:-25%
   .reveal{opacity:0;transform:translateY(26px) scale(.98);transition:opacity .7s cubic-bezier(.2,.8,.2,1),transform .7s cubic-bezier(.2,.8,.2,1)}
   .reveal.in{opacity:1;transform:none}
 }
-
-@media(prefers-reduced-motion:reduce){body::before{animation:none!important}}
