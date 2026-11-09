@@ -526,3 +526,16 @@ kbd{font:700 .7rem "Plus Jakarta Sans",sans-serif;padding:.15rem .45rem;border-r
   body::before,.mascot{animation:none!important}
   ::view-transition-old(root),::view-transition-new(root){animation:none!important}
 }
+
+/* ===== Light theme versi ungu lavender ===== */
+[data-theme=light]{
+  --bg:#f3eeff;--bg2:#e4d9ff;--surface:#ffffff;--text:#1d1646;--muted:#675f94;
+  --accent:#6d4aff;--accent-2:#1fc7b0;--ink-on:#fff;--line:#dcd0fb;--chip:#ebe3ff;
+  --shadow:0 12px 32px rgba(109,74,255,.18);
+  --lv:#b49bff;--mn:#7fe8d3;--pk:#ffaed4;--pe:#ffc4a3;--bu:#ffe39a;
+  --b1:#5b45e8;--b2:#8a4bff;--b3:#e0489a;--b4:#f07a3a;--b5:#17a999;--b6:#4f7cff;--b7:#a14dea;
+}
+[data-theme=light] .count{background:linear-gradient(135deg,#5a3df0,#9a5cff 58%,#2fc9b6)}
+[data-theme=light] body::before{opacity:1}
+[data-theme=light] .hero h1{background:linear-gradient(100deg,var(--text) 0 48%,#6d4aff 76%,#ff6fb5);-webkit-background-clip:text;background-clip:text;color:transparent}
+[data-theme=light] .brand{background:linear-gradient(180deg,#e0d4ff,var(--bg))}
