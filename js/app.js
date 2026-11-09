@@ -1,3 +1,21 @@
+// cadangan: kalau tryout.js gagal dimuat, situs tetap jalan dan hanya fitur Try Out yang dinonaktifkan
+if (typeof AFU !== "undefined" && !AFU.TO) {
+  console.warn("[AFU] tryout.js tidak termuat, Try Out dinonaktifkan sementara. Cek tab Network untuk file /js/tryout.js.");
+  AFU.TO = {
+    render() {
+      const r = document.getElementById("app");
+      if (r) r.innerHTML = '<div class="wrap"><p class="notice warn">Try Out belum bisa dimuat. Muat ulang halaman dengan Ctrl+Shift+R.</p></div>';
+    },
+    leaving: () => true,
+    busy: () => false,
+    repaint() {},
+    count: () => 0,
+    hasDraft: () => false,
+    stats: () => ({ n: 0, avg: 0, best: 0 }),
+    loadList: async () => []
+  };
+}
+
 (() => {
   const { t, esc, sb, SUB, ABBR } = AFU;
   const app = document.getElementById("app");
@@ -114,7 +132,7 @@
   function docCard(d, tag) {
     const loc = AFU.lang === "id" ? "id-ID" : "en-US";
     const date = new Date(d.created_at).toLocaleDateString(loc, { day: "numeric", month: "short", year: "numeric" });
-    const meta = [AFU.fmtSize(d.size_bytes), t("added") + " " + date].filter(Boolean).join(" · ");
+    const meta = [AFU.fmtSize(d.size_bytes), t("added") + " " + date].filter(Boolean).join(" \u00B7 ");
     const url = AFU.url(d.file_path);
     const partner = d.pair_id && cache.byId?.[d.pair_id];
     const on = favs().includes(d.id);
@@ -144,7 +162,7 @@
     let seen = ""; try { seen = sessionStorage.getItem("afu-ban"); } catch (e) {}
     if (!txt || seen === txt) { b.hidden = true; return; }
     b.hidden = false;
-    b.innerHTML = `<div class="wrap banner-in"><span>${esc(txt)}</span><button type="button" id="banX" aria-label="${esc(t("close"))}">×</button></div>`;
+    b.innerHTML = `<div class="wrap banner-in"><span>${esc(txt)}</span><button type="button" id="banX" aria-label="${esc(t("close"))}">\u00D7</button></div>`;
     document.getElementById("banX").onclick = () => { try { sessionStorage.setItem("afu-ban", txt); } catch (e) {} b.hidden = true; };
   }
 
@@ -247,7 +265,7 @@
     const docs = LS.get("afu-recent", []).map(id => cache.byId?.[id]).filter(Boolean);
     if (!docs.length) { box.innerHTML = ""; return; }
     box.innerHTML = `<h2 class="how-t">${esc(t("rc_t"))}</h2><div class="grid2">${docs.slice(0, 2).map(d =>
-      docCard(d, `${t(d.type === "soal" ? "modul_t" : "pemb_t")} · ${ABBR[d.subtest]}`)).join("")}</div>`;
+      docCard(d, `${t(d.type === "soal" ? "modul_t" : "pemb_t")} \u00B7 ${ABBR[d.subtest]}`)).join("")}</div>`;
     stagger();
   }
 
@@ -346,7 +364,7 @@
       const all = await loadAll(), box = document.getElementById("latest");
       if (!box || !all.length) return;
       box.innerHTML = `<h2 class="how-t">${esc(t("latest"))}</h2><div class="grid2">${all.slice(0, 6).map(d =>
-        docCard(d, `${t(d.type === "soal" ? "modul_t" : "pemb_t")} · ${ABBR[d.subtest]}`)).join("")}</div>`;
+        docCard(d, `${t(d.type === "soal" ? "modul_t" : "pemb_t")} \u00B7 ${ABBR[d.subtest]}`)).join("")}</div>`;
       stagger(); fillRecent();
     } catch (e) {}
   }
@@ -360,7 +378,7 @@
       const res = all.filter(d => (d.title + " " + (d.description || "") + " " + (d.category || "")).toLowerCase().includes(v)).slice(0, 12);
       if (!box.isConnected) return;
       box.innerHTML = res.length
-        ? `<div class="grid2 gres-list">${res.map(d => docCard(d, `${t(d.type === "soal" ? "modul_t" : "pemb_t")} · ${ABBR[d.subtest]}`)).join("")}</div>`
+        ? `<div class="grid2 gres-list">${res.map(d => docCard(d, `${t(d.type === "soal" ? "modul_t" : "pemb_t")} \u00B7 ${ABBR[d.subtest]}`)).join("")}</div>`
         : `<p class="notice">${esc(t("no_match"))}</p>`;
       stagger();
     } catch (e) { box.innerHTML = `<p class="notice warn">${esc(t("err"))}</p>`; }
@@ -443,7 +461,7 @@
       <section class="wrap page">
         <a class="back" href="/">${ICON.back}${esc(t("back"))}</a>
         <h1>${esc(t("fav_t"))}</h1><p class="lead sm">${esc(t("fav_note"))}</p>
-        ${list.length ? `<div class="grid2">${list.map(d => docCard(d, `${t(d.type === "soal" ? "modul_t" : "pemb_t")} · ${ABBR[d.subtest]}`)).join("")}</div>`
+        ${list.length ? `<div class="grid2">${list.map(d => docCard(d, `${t(d.type === "soal" ? "modul_t" : "pemb_t")} \u00B7 ${ABBR[d.subtest]}`)).join("")}</div>`
           : `<p class="notice">${esc(t("fav_empty"))}</p>`}
       </section>`;
     stagger();
@@ -534,4 +552,102 @@
       const q = document.getElementById("gq"); if (q) { e.preventDefault(); q.focus(); }
     });
   })();
+})();
+
+// ---------- v8: aurora latar ikut kursor, kartu miring saat kursor di dalamnya, cahaya aurora di dalam kartu, tombol magnetik ----------
+(() => {
+  const fine = matchMedia("(hover:hover) and (pointer:fine)").matches;
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const app = document.getElementById("app");
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  // ===== aurora latar: 4 gumpalan cahaya, diselipkan sebagai latar =====
+  const au = document.createElement("div");
+  au.className = "aurora"; au.setAttribute("aria-hidden", "true");
+  au.innerHTML = "<i></i><i></i><i></i><i></i>";
+  document.body.prepend(au);
+  document.documentElement.classList.add("has-aurora");
+  const blobs = [...au.children], FOLLOW = [.32, .20, .28, .16]; // makin besar = makin jauh ikut kursor
+  let ax = 0, ay = 0, tx = 0, ty = 0, auRun = false;
+  const auLoop = () => {
+    ax += (tx - ax) * .06; ay += (ty - ay) * .06; // gerak halus, ada "ekor"
+    blobs.forEach((b, i) => { b.style.translate = `${(ax * FOLLOW[i]).toFixed(1)}px ${(ay * FOLLOW[i]).toFixed(1)}px`; });
+    if (Math.abs(tx - ax) > .3 || Math.abs(ty - ay) > .3) requestAnimationFrame(auLoop); else auRun = false;
+  };
+
+  // ===== kartu: miring HANYA saat kursor ada di dalam kartu =====
+  // DIR = 1  -> sisi kartu yang dekat kursor "menghadap" kursor. Ubah ke -1 kalau mau kebalikannya.
+  const DIR = 1;
+  // max = sudut miring maksimal (derajat) saat kursor di tepi kartu. Kecilkan angkanya kalau masih terlalu miring.
+  const GROUPS = [
+    { sel: ".card.big,.card.to-card", max: 6 },        // kartu besar beranda + kartu try out
+    { sel: ".card.book", max: 5 },                      // kartu subtes
+    { sel: ".card.doc", max: 3.5 },                     // kartu dokumen (lebar, jadi miringnya lebih kecil)
+    { sel: ".honey", max: 7, minWidth: 821 }            // 7 heksagon = satu kartu, miring bersama
+  ];
+  const ALL = GROUPS.map(g => g.sel).join(","), MAG = ".promo-btn,.soc,.ctrl .icon-btn";
+  const groupOf = el => GROUPS.find(g => el.matches(g.sel));
+  const resetT = el => { el.style.removeProperty("--rx"); el.style.removeProperty("--ry"); };
+  const resetM = el => { el.style.translate = ""; };
+  let px = 0, py = 0, has = false, pRaf = 0, curT = null, curM = null;
+
+  // satu titik kursor -> cari kartu di bawahnya -> miringkan + gerakkan cahaya di dalamnya
+  const point = (x, y, target) => {
+    const el = target && target.closest ? target.closest(ALL) : null;
+    if (curT && curT !== el) resetT(curT); // kursor keluar dari kartu -> kartu kembali lurus
+    curT = el;
+    if (!el) return;
+    const g = groupOf(el);
+    if (g.minWidth && innerWidth < g.minWidth) return resetT(el);
+    const r = el.getBoundingClientRect();
+    const fx = clamp((x - r.left) / r.width, 0, 1), fy = clamp((y - r.top) / r.height, 0, 1); // posisi kursor di dalam kartu, 0..1
+    el.style.setProperty("--ry", (DIR * (fx - .5) * 2 * g.max).toFixed(2) + "deg");
+    el.style.setProperty("--rx", (-DIR * (fy - .5) * 2 * g.max).toFixed(2) + "deg");
+    el.style.setProperty("--mx", (fx * 100).toFixed(1) + "%"); // posisi cahaya aurora di dalam kartu
+    el.style.setProperty("--my", (fy * 100).toFixed(1) + "%");
+  };
+  const sched = target => {
+    if (pRaf) return;
+    pRaf = requestAnimationFrame(() => { pRaf = 0; if (has) point(px, py, target || document.elementFromPoint(px, py)); });
+  };
+
+  if (fine && !reduce) {
+    addEventListener("pointermove", e => {
+      if (e.pointerType !== "mouse") return;
+      px = e.clientX; py = e.clientY; has = true;
+      sched(e.target);
+
+      // aurora latar ikut kursor
+      tx = px - innerWidth / 2; ty = py - innerHeight / 2;
+      if (!auRun) { auRun = true; requestAnimationFrame(auLoop); }
+
+      // tombol magnetik
+      const m = e.target.closest && e.target.closest(MAG);
+      if (curM && curM !== m) resetM(curM);
+      curM = m;
+      if (m) {
+        const r = m.getBoundingClientRect();
+        m.style.translate = `${((px - (r.left + r.width / 2)) * .25).toFixed(1)}px ${((py - (r.top + r.height / 2)) * .25).toFixed(1)}px`;
+      }
+    }, { passive: true });
+    addEventListener("scroll", () => sched(null), { passive: true }); // kartu bergeser saat gulir, hitung ulang
+    document.documentElement.addEventListener("mouseleave", () => {
+      has = false;
+      if (curT) resetT(curT); curT = null;
+      if (curM) resetM(curM); curM = null;
+    });
+  }
+
+  // ===== muncul halus saat digulir + dipasang ulang tiap halaman dirender =====
+  let scan = () => {};
+  if (!reduce && app && "IntersectionObserver" in window) {
+    const io = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) { en.target.classList.add("in"); io.unobserve(en.target); } }), { threshold: .12, rootMargin: "0px 0px -5% 0px" });
+    const SEL = ".promo,.count,.how-t,.steps,.faq,.req,.tbanner,.pomo";
+    scan = () => app.querySelectorAll(SEL).forEach(el => { if (el.dataset.rv) return; el.dataset.rv = "1"; el.classList.add("reveal"); io.observe(el); });
+  }
+  if (app) {
+    let mRaf = 0;
+    new MutationObserver(() => { if (!mRaf) mRaf = requestAnimationFrame(() => { mRaf = 0; scan(); }); }).observe(app, { childList: true, subtree: true });
+    scan();
+  }
 })();
