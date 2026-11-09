@@ -539,3 +539,29 @@ kbd{font:700 .7rem "Plus Jakarta Sans",sans-serif;padding:.15rem .45rem;border-r
 [data-theme=light] body::before{opacity:1}
 [data-theme=light] .hero h1{background:linear-gradient(100deg,var(--text) 0 48%,#6d4aff 76%,#ff6fb5);-webkit-background-clip:text;background-clip:text;color:transparent}
 [data-theme=light] .brand{background:linear-gradient(180deg,#e0d4ff,var(--bg))}
+
+/* ===== Light theme: lebih berdimensi (tidak flat) ===== */
+[data-theme=light]{--bg:#ebe3ff;--bg2:#dccfff;--line:#d3c4fb}
+
+/* aurora lebih pekat */
+[data-theme=light] body::before{filter:blur(40px);background:
+  radial-gradient(42% 36% at 15% 20%,color-mix(in srgb,#9f7bff 60%,transparent),transparent 70%),
+  radial-gradient(38% 32% at 85% 15%,color-mix(in srgb,#5fe0cc 55%,transparent),transparent 70%),
+  radial-gradient(44% 38% at 75% 85%,color-mix(in srgb,#ff8fc7 55%,transparent),transparent 70%),
+  radial-gradient(34% 30% at 12% 82%,color-mix(in srgb,#ffd27a 50%,transparent),transparent 70%)}
+
+/* pola titik halus di latar */
+[data-theme=light] body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background-image:radial-gradient(rgba(109,74,255,.16) 1.2px,transparent 1.3px);background-size:26px 26px;
+  -webkit-mask-image:linear-gradient(180deg,#000,transparent 85%);mask-image:linear-gradient(180deg,#000,transparent 85%)}
+
+/* kartu: gradasi tipis + bayangan berlapis + garis tepi ungu */
+[data-theme=light] .card:not(.skel){background:linear-gradient(160deg,rgba(255,255,255,.93),rgba(245,238,255,.82));
+  border:1px solid rgba(109,74,255,.18);
+  box-shadow:0 1px 0 #fff inset,0 14px 34px rgba(109,74,255,.16),0 3px 8px rgba(109,74,255,.08)}
+
+/* bagian atas halaman dan footer */
+[data-theme=light] .hero::before{background:
+  radial-gradient(50% 70% at 100% 0%,rgba(255,143,199,.35),transparent 70%),
+  radial-gradient(50% 70% at 0% 100%,rgba(109,74,255,.25),transparent 70%)}
+[data-theme=light] .ftr{background:linear-gradient(160deg,#2a1b7a,#5b3bd8)}
