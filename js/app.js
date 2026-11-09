@@ -536,14 +536,14 @@
   })();
 })();
 
-// ---------- v8: aurora ikut kursor, semua kartu + heksagon miring menghadap kursor, tombol magnetik ----------
+// ---------- v8: aurora latar ikut kursor, kartu miring saat kursor di dalamnya, cahaya aurora di dalam kartu, tombol magnetik ----------
 (() => {
   const fine = matchMedia("(hover:hover) and (pointer:fine)").matches;
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const app = document.getElementById("app");
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
-  // ===== aurora: 4 gumpalan cahaya, diselipkan sebagai latar =====
+  // ===== aurora latar: 4 gumpalan cahaya, diselipkan sebagai latar =====
   const au = document.createElement("div");
   au.className = "aurora"; au.setAttribute("aria-hidden", "true");
   au.innerHTML = "<i></i><i></i><i></i><i></i>";
@@ -557,44 +557,54 @@
     if (Math.abs(tx - ax) > .3 || Math.abs(ty - ay) > .3) requestAnimationFrame(auLoop); else auRun = false;
   };
 
-  // ===== miring menghadap kursor =====
+  // ===== kartu: miring HANYA saat kursor ada di dalam kartu =====
   // DIR = 1  -> sisi kartu yang dekat kursor "menghadap" kursor. Ubah ke -1 kalau mau kebalikannya.
   const DIR = 1;
-  // max = sudut miring maksimal (derajat). mx / my = jarak (px) kursor dari tengah supaya miringnya maksimal.
+  // max = sudut miring maksimal (derajat) saat kursor di tepi kartu. Kecilkan angkanya kalau masih terlalu miring.
   const GROUPS = [
-    { sel: ".card.big,.card.book,.card.to-card", max: 12, mx: 220, my: 160 }, // kartu besar, subtes, try out
-    { sel: ".card.doc", max: 8, mx: 260, my: 130 },                          // kartu dokumen
-    { sel: ".hex", max: 32, mx: 180, my: 180 }                              // heksagon beranda
+    { sel: ".card.big,.card.to-card", max: 6 },        // kartu besar beranda + kartu try out
+    { sel: ".card.book", max: 5 },                      // kartu subtes
+    { sel: ".card.doc", max: 3.5 },                     // kartu dokumen (lebar, jadi miringnya lebih kecil)
+    { sel: ".honey", max: 7, minWidth: 821 }            // 7 heksagon = satu kartu, miring bersama
   ];
   const ALL = GROUPS.map(g => g.sel).join(","), MAG = ".promo-btn,.soc,.ctrl .icon-btn";
-  let px = 0, py = 0, has = false, tRaf = 0, curM = null;
-  const tiltAll = () => {
-    tRaf = 0; if (!has) return;
-    const items = [];
-    GROUPS.forEach(g => document.querySelectorAll(g.sel).forEach(el => items.push([el, g, el.getBoundingClientRect()]))); // baca semua dulu, baru tulis
-    items.forEach(([el, g, r]) => {
-      if (r.bottom < -150 || r.top > innerHeight + 150) return; // di luar layar dilewati
-      const nx = clamp((px - (r.left + r.width / 2)) / Math.max(r.width / 2, g.mx), -1, 1);
-      const ny = clamp((py - (r.top + r.height / 2)) / Math.max(r.height / 2, g.my), -1, 1);
-      el.style.setProperty("--ry", (DIR * nx * g.max).toFixed(2) + "deg");
-      el.style.setProperty("--rx", (-DIR * ny * g.max).toFixed(2) + "deg");
-    });
-  };
-  const schedTilt = () => { if (has && !tRaf) tRaf = requestAnimationFrame(tiltAll); };
+  const groupOf = el => GROUPS.find(g => el.matches(g.sel));
+  const resetT = el => { el.style.removeProperty("--rx"); el.style.removeProperty("--ry"); };
   const resetM = el => { el.style.translate = ""; };
+  let px = 0, py = 0, has = false, pRaf = 0, curT = null, curM = null;
+
+  // satu titik kursor -> cari kartu di bawahnya -> miringkan + gerakkan cahaya di dalamnya
+  const point = (x, y, target) => {
+    const el = target && target.closest ? target.closest(ALL) : null;
+    if (curT && curT !== el) resetT(curT); // kursor keluar dari kartu -> kartu kembali lurus
+    curT = el;
+    if (!el) return;
+    const g = groupOf(el);
+    if (g.minWidth && innerWidth < g.minWidth) return resetT(el);
+    const r = el.getBoundingClientRect();
+    const fx = clamp((x - r.left) / r.width, 0, 1), fy = clamp((y - r.top) / r.height, 0, 1); // posisi kursor di dalam kartu, 0..1
+    el.style.setProperty("--ry", (DIR * (fx - .5) * 2 * g.max).toFixed(2) + "deg");
+    el.style.setProperty("--rx", (-DIR * (fy - .5) * 2 * g.max).toFixed(2) + "deg");
+    el.style.setProperty("--mx", (fx * 100).toFixed(1) + "%"); // posisi cahaya aurora di dalam kartu
+    el.style.setProperty("--my", (fy * 100).toFixed(1) + "%");
+  };
+  const sched = target => {
+    if (pRaf) return;
+    pRaf = requestAnimationFrame(() => { pRaf = 0; if (has) point(px, py, target || document.elementFromPoint(px, py)); });
+  };
 
   if (fine && !reduce) {
     addEventListener("pointermove", e => {
       if (e.pointerType !== "mouse") return;
       px = e.clientX; py = e.clientY; has = true;
-      schedTilt();
+      sched(e.target);
 
-      // aurora ikut kursor
+      // aurora latar ikut kursor
       tx = px - innerWidth / 2; ty = py - innerHeight / 2;
       if (!auRun) { auRun = true; requestAnimationFrame(auLoop); }
 
       // tombol magnetik
-      const m = e.target.closest?.(MAG);
+      const m = e.target.closest && e.target.closest(MAG);
       if (curM && curM !== m) resetM(curM);
       curM = m;
       if (m) {
@@ -602,10 +612,10 @@
         m.style.translate = `${((px - (r.left + r.width / 2)) * .25).toFixed(1)}px ${((py - (r.top + r.height / 2)) * .25).toFixed(1)}px`;
       }
     }, { passive: true });
-    addEventListener("scroll", schedTilt, { passive: true }); // kartu bergeser saat gulir, hitung ulang miringnya
+    addEventListener("scroll", () => sched(null), { passive: true }); // kartu bergeser saat gulir, hitung ulang
     document.documentElement.addEventListener("mouseleave", () => {
       has = false;
-      document.querySelectorAll(ALL).forEach(el => { el.style.removeProperty("--rx"); el.style.removeProperty("--ry"); });
+      if (curT) resetT(curT); curT = null;
       if (curM) resetM(curM); curM = null;
     });
   }
@@ -619,7 +629,7 @@
   }
   if (app) {
     let mRaf = 0;
-    new MutationObserver(() => { if (!mRaf) mRaf = requestAnimationFrame(() => { mRaf = 0; scan(); schedTilt(); }); }).observe(app, { childList: true, subtree: true });
+    new MutationObserver(() => { if (!mRaf) mRaf = requestAnimationFrame(() => { mRaf = 0; scan(); }); }).observe(app, { childList: true, subtree: true });
     scan();
   }
 })();
