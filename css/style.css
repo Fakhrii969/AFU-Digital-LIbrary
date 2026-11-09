@@ -784,3 +784,51 @@ a.card:hover,.st:hover{border-color:var(--accent);box-shadow:var(--shadow-lg),0 
 .btn.tb-btn:not(.ghost){background:#fff;color:var(--accent);border:0;box-shadow:0 10px 22px -8px rgba(0,0,0,.35)}
 [data-theme=dark] .btn.tb-btn:not(.ghost){background:#fff;color:#1f2f9a}
 .btn.promo-btn:not(.ghost){background:linear-gradient(135deg,var(--accent),var(--accent-2));box-shadow:0 12px 26px -8px var(--glow)}
+
+/* ================= v8: aurora + efek kursor (kartu miring, cahaya sorot, tombol magnetik, heksagon) ================= */
+
+/* ---------- warna aurora (mengikuti palet biru AFU) ---------- */
+:root{--au1:rgba(39,87,232,.34);--au2:rgba(15,179,240,.30);--au3:rgba(124,82,242,.28);--au4:rgba(255,159,67,.22)}
+[data-theme=dark]{--au1:rgba(79,110,255,.42);--au2:rgba(34,200,255,.26);--au3:rgba(140,92,255,.36);--au4:rgba(255,140,60,.14)}
+
+/* ---------- latar aurora: menimpa latar statis v7 ---------- */
+body::before,[data-theme=dark] body::before{content:"";position:fixed;inset:-25%;z-index:-1;pointer-events:none;will-change:transform;filter:blur(34px);
+  background:
+    radial-gradient(38% 32% at 18% 22%,var(--au1),transparent 70%),
+    radial-gradient(34% 30% at 82% 18%,var(--au2),transparent 70%),
+    radial-gradient(40% 34% at 70% 85%,var(--au3),transparent 70%),
+    radial-gradient(30% 28% at 15% 80%,var(--au4),transparent 70%);
+  animation:aurora 26s ease-in-out infinite alternate}
+@keyframes aurora{to{transform:translate3d(4%,3%,0) rotate(8deg) scale(1.1)}}
+@media(max-width:640px){body::before,[data-theme=dark] body::before{animation:none;filter:blur(24px)}}
+
+/* ---------- kartu: cahaya sorot mengikuti kursor ---------- */
+.card.big,.card.book,.card.doc,.card.to-card{position:relative;isolation:isolate}
+.card.big::before,.card.book::before,.card.doc::before,.card.to-card::before{content:"";position:absolute;inset:0;z-index:-1;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .25s;
+  background:radial-gradient(420px circle at var(--mx,50%) var(--my,50%),color-mix(in srgb,var(--accent-2) 26%,transparent),transparent 60%)}
+.card.big:hover::before,.card.book:hover::before,.card.doc:hover::before,.card.to-card:hover::before{opacity:1}
+
+/* ---------- kartu miring ikut kursor (hanya mouse di desktop) ---------- */
+@media(hover:hover) and (pointer:fine){
+  a.card.big,a.card.book,a.card.to-card,.card.doc{transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .25s ease-out,border-color .2s,box-shadow .2s}
+  a.card.big:hover,a.card.book:hover,a.card.to-card:hover,.card.doc:hover{transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) translateY(-3px);box-shadow:var(--shadow-lg),0 0 0 3px var(--glow),inset 0 1px 0 var(--hl)}
+  a.card.big:active,a.card.book:active,a.card.to-card:active{transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) scale(.985)}
+}
+
+/* ---------- heksagon beranda ikut gerak kursor (desktop) ---------- */
+@media(min-width:821px) and (hover:hover){
+  .honey{transform:perspective(1000px) rotateY(var(--hx,0deg)) rotateX(var(--hy,0deg));transition:transform .25s ease-out}
+}
+
+/* ---------- tombol magnetik ---------- */
+.btn.promo-btn{transition:transform .25s cubic-bezier(.2,1.4,.4,1),box-shadow .25s,filter .2s,translate .18s ease-out}
+.soc{transition:transform .2s cubic-bezier(.2,1.4,.4,1),background .2s,color .2s,translate .18s ease-out}
+.ctrl .icon-btn{transition:transform .15s,border-color .15s,translate .18s ease-out}
+
+/* ---------- muncul halus saat digulir (class .reveal ditambah lewat JS) ---------- */
+@media(prefers-reduced-motion:no-preference){
+  .reveal{opacity:0;transform:translateY(26px) scale(.98);transition:opacity .7s cubic-bezier(.2,.8,.2,1),transform .7s cubic-bezier(.2,.8,.2,1)}
+  .reveal.in{opacity:1;transform:none}
+}
+
+@media(prefers-reduced-motion:reduce){body::before{animation:none!important}}
