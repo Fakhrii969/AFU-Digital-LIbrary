@@ -1,15 +1,19 @@
 :root{
-  --bg:#eef4ff;--bg2:#d9e8ff;--surface:#fff;--text:#0f1f4d;--muted:#55678f;
-  --accent:#1f5fe0;--accent-2:#00a8f0;--ink-on:#fff;--line:#cfdcf5;--chip:#e3eeff;
-  --shadow:0 8px 28px rgba(31,95,224,.12);
-  --b1:#0a1b7a;--b2:#1b3fc8;--b3:#1f5fe0;--b4:#0b7ed6;--b5:#2a4fd6;--b6:#1469c9;--b7:#3366e0;
+  --bg:#f1f5ff;--bg2:#dbe7ff;--surface:#ffffff;--surface-2:#f6f8ff;--text:#0b1a47;--muted:#4f6190;
+  --accent:#2757e8;--accent-2:#0fb3f0;--ink-on:#fff;--line:#d0dcf6;--line-2:#b4c6ee;--chip:#e5edff;
+  --hl:rgba(255,255,255,.85);--glow:rgba(39,87,232,.20);
+  --shadow:0 1px 2px rgba(18,42,120,.07),0 10px 28px -10px rgba(39,87,232,.22);
+  --shadow-lg:0 2px 4px rgba(18,42,120,.07),0 26px 50px -16px rgba(39,87,232,.34);
+  --b1:#2347d9;--b2:#6b3fe0;--b3:#0b7fd0;--b4:#0c8f8f;--b5:#d4601c;--b6:#c93a73;--b7:#2f9650;
   --display:"Bricolage Grotesque","Plus Jakarta Sans",system-ui,sans-serif;
 }
 [data-theme=dark]{
-  --bg:#0e0c28;--bg2:#1b1745;--surface:#1a1642;--text:#efeaff;--muted:#aaa3d8;
-  --accent:#9b7bff;--accent-2:#c4b0ff;--ink-on:#fff;--line:#332e6e;--chip:#2a2561;
-  --shadow:0 8px 28px rgba(0,0,0,.4);
-  --b1:#3a1f8f;--b2:#5a35c8;--b3:#7b52e8;--b4:#6a49d6;--b5:#4d2fb5;--b6:#8059e0;--b7:#5f3fc9;
+  --bg:#080d20;--bg2:#101b3f;--surface:#111a36;--surface-2:#172250;--text:#e9efff;--muted:#9aaad8;
+  --accent:#7ea6ff;--accent-2:#4fdcff;--ink-on:#071027;--line:#27355f;--line-2:#3b4c85;--chip:#1a2552;
+  --hl:rgba(160,190,255,.07);--glow:rgba(126,166,255,.22);
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 14px 34px -12px rgba(0,0,0,.65);
+  --shadow-lg:0 2px 4px rgba(0,0,0,.5),0 30px 60px -18px rgba(0,0,0,.8);
+  --b1:#3b63f0;--b2:#7c52f2;--b3:#1b8fe0;--b4:#12a3a0;--b5:#e07328;--b6:#dd4c86;--b7:#3fae60;
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
@@ -678,3 +682,105 @@ button.qn:hover{transform:translateY(-2px);border-color:var(--accent)}
 .admin-sec{border-top:1px dashed var(--line);margin-top:1.2rem;padding-top:1.2rem}
 .nav a{flex:none}
 @media(max-width:640px){.nav-new{font-size:0;width:8px;height:8px;padding:0;margin-left:.25rem;border-radius:50%}}
+
+/* ================= v7: palet baru, latar berlapis, frame dan bayangan (light + dark) ================= */
+
+/* latar halaman: cahaya gradasi berlapis, tetap diam saat gulir */
+body{background:var(--bg)}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(900px 520px at 8% -6%,rgba(39,87,232,.20),transparent 62%),
+    radial-gradient(800px 520px at 98% 2%,rgba(15,179,240,.18),transparent 62%),
+    radial-gradient(760px 640px at 88% 58%,rgba(124,82,242,.12),transparent 62%),
+    radial-gradient(820px 620px at -4% 92%,rgba(255,159,67,.11),transparent 62%)}
+[data-theme=dark] body::before{background:
+    radial-gradient(900px 520px at 8% -6%,rgba(79,110,255,.30),transparent 62%),
+    radial-gradient(800px 520px at 98% 2%,rgba(34,200,255,.20),transparent 62%),
+    radial-gradient(760px 640px at 88% 58%,rgba(140,92,255,.22),transparent 62%),
+    radial-gradient(820px 620px at -4% 92%,rgba(255,140,60,.10),transparent 62%)}
+body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.5;
+  background-image:radial-gradient(color-mix(in srgb,var(--accent) 22%,transparent) 1px,transparent 1.2px);background-size:26px 26px;
+  -webkit-mask-image:linear-gradient(180deg,#000,transparent 55%);mask-image:linear-gradient(180deg,#000,transparent 55%)}
+[data-theme=dark] body::after{opacity:.35}
+
+/* header: tembus ke latar, bukan blok datar */
+.brand{background:linear-gradient(180deg,color-mix(in srgb,var(--bg2) 80%,transparent),transparent)}
+.logo{border:1px solid var(--line-2);box-shadow:var(--shadow-lg),inset 0 1px 0 #fff}
+[data-theme=dark] .logo{box-shadow:0 0 0 1px rgba(126,166,255,.25),0 16px 40px -10px rgba(79,110,255,.5)}
+.bar{background:color-mix(in srgb,var(--surface) 78%,transparent);border-bottom:1px solid var(--line-2);box-shadow:0 10px 24px -16px var(--glow);backdrop-filter:blur(16px) saturate(1.4)}
+.nav a.on{background:linear-gradient(135deg,var(--accent),var(--accent-2));box-shadow:0 6px 16px -6px var(--glow)}
+.icon-btn{border-color:var(--line-2);box-shadow:var(--shadow)}
+
+/* judul hero bergradasi */
+.hero h1{background:linear-gradient(120deg,var(--text) 35%,var(--accent) 80%,var(--accent-2));-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;padding-bottom:.08em}
+
+/* frame + bayangan untuk semua kartu dan kontrol */
+.card,.kpi,.st,.dlg-card,.pomo,.promo,.faq details,.ai-panel,.req{
+  border:1px solid var(--line);
+  background:linear-gradient(180deg,var(--surface),var(--surface-2));
+  box-shadow:var(--shadow),inset 0 1px 0 var(--hl)}
+a.card:hover,.st:hover{border-color:var(--accent);box-shadow:var(--shadow-lg),0 0 0 3px var(--glow),inset 0 1px 0 var(--hl)}
+.card::before{pointer-events:none}
+.search,.sortbox select,.chip,.fav,.to-nick input,.tg input,.form input,.form select,.form textarea,.ai-f input{
+  border:1px solid var(--line-2);background:var(--surface);box-shadow:0 1px 2px rgba(18,42,120,.06)}
+[data-theme=dark] .search,[data-theme=dark] .sortbox select,[data-theme=dark] .chip,[data-theme=dark] .fav,[data-theme=dark] .form input,[data-theme=dark] .form select,[data-theme=dark] .form textarea{box-shadow:0 1px 2px rgba(0,0,0,.4)}
+.search:focus-within,.form input:focus,.form select:focus,.form textarea:focus{border-color:var(--accent);box-shadow:0 0 0 4px var(--glow)}
+.hero .search.gs{border:2px solid color-mix(in srgb,var(--accent) 45%,var(--line-2));box-shadow:0 12px 30px -10px var(--glow),inset 0 1px 0 var(--hl)}
+.chip[aria-pressed=true]{background:linear-gradient(135deg,var(--accent),var(--accent-2));border-color:transparent;box-shadow:0 6px 14px -6px var(--glow)}
+.pdf{border:1px solid var(--line-2);background:linear-gradient(160deg,var(--chip),var(--surface))}
+.btn:not(.ghost){background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 55%,var(--accent-2)));border-color:transparent;box-shadow:0 8px 18px -8px var(--glow),inset 0 1px 0 rgba(255,255,255,.25)}
+.btn.ghost{border-color:color-mix(in srgb,var(--accent) 45%,var(--line-2));background:color-mix(in srgb,var(--surface) 70%,transparent)}
+.steps li{border:1px solid var(--line);background:linear-gradient(180deg,var(--chip),color-mix(in srgb,var(--chip) 60%,var(--surface)));box-shadow:inset 0 1px 0 var(--hl)}
+.big::after,.to-card::after{opacity:.1}
+.opt,.qn{border-color:var(--line-2);box-shadow:0 1px 2px rgba(18,42,120,.05)}
+.exam-bar{border-color:var(--line-2)}
+.lb li:nth-child(odd),.to-sub,.expl,.tb-grid div{border:1px solid color-mix(in srgb,var(--line) 70%,transparent)}
+.cat{border-bottom:1px solid var(--line-2)}
+.notice{border:1px solid var(--line)}
+
+/* kartu hitung mundur, banner try out: gradasi lebih hidup + bingkai cahaya */
+.count,.tbanner{background:linear-gradient(135deg,#14289a 0%,#2757e8 55%,#14b8f5 100%);border:1px solid rgba(255,255,255,.25);box-shadow:var(--shadow-lg),inset 0 1px 0 rgba(255,255,255,.3)}
+[data-theme=dark] .count,[data-theme=dark] .tbanner{background:linear-gradient(135deg,#17236e 0%,#3b4fe0 52%,#2aa6e8 100%);box-shadow:var(--shadow-lg),0 0 0 1px rgba(126,166,255,.25),inset 0 1px 0 rgba(255,255,255,.18)}
+.tile{border-color:rgba(255,255,255,.35)}
+.tb-stat{background:linear-gradient(180deg,var(--surface),var(--surface-2))}
+.promo{background:
+  radial-gradient(circle at 0 0,color-mix(in srgb,var(--accent) 20%,transparent) 0 17%,transparent 17.5%),
+  radial-gradient(circle at 100% 0,color-mix(in srgb,var(--accent-2) 20%,transparent) 0 13%,transparent 13.5%),
+  radial-gradient(circle at 100% 100%,color-mix(in srgb,#ff9f43 22%,transparent) 0 18%,transparent 18.5%),
+  linear-gradient(180deg,var(--surface),var(--surface-2))}
+.banner{background:linear-gradient(90deg,#2757e8,#7c52f2 55%,#0fb3f0);box-shadow:0 6px 18px -8px var(--glow)}
+[data-theme=dark] .banner{background:linear-gradient(90deg,#3555d8,#7447e0 55%,#1c9fd8);color:#fff}
+
+/* angka strip + ikon */
+.st b{background:linear-gradient(135deg,var(--accent),var(--accent-2));-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+.st.fire b{background:linear-gradient(135deg,#ff8a2f,#ffc23a);-webkit-background-clip:text;background-clip:text}
+.ico{background:linear-gradient(135deg,var(--accent),var(--accent-2));box-shadow:0 10px 20px -8px var(--glow)}
+.big.alt .ico{background:linear-gradient(135deg,#ff9f43,#ffc83a);color:#3a2300}
+
+/* hex subtes: bingkai + cahaya */
+.hex{filter:drop-shadow(0 8px 10px color-mix(in srgb,var(--c) 40%,transparent))}
+.hex:hover{filter:brightness(1.12) drop-shadow(0 12px 16px color-mix(in srgb,var(--c) 55%,transparent))}
+.spine{box-shadow:inset -1px 0 0 rgba(0,0,0,.15)}
+
+/* footer: aksen gradasi di atas */
+.ftr{position:relative;background:linear-gradient(165deg,#0a1650,#102a82 60%,#0d3c94);box-shadow:0 -18px 40px -24px var(--glow)}
+.ftr::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,#2757e8,#7c52f2,#0fb3f0,#ff9f43)}
+[data-theme=dark] .ftr{background:linear-gradient(165deg,#060a1d,#0e1740 60%,#12205a)}
+.ftr-logo{box-shadow:0 8px 20px rgba(0,0,0,.25)}
+
+/* maskot & asisten: bingkai senada */
+.ai-panel{box-shadow:var(--shadow-lg),0 0 0 1px var(--line-2)}
+.ai-h{background:linear-gradient(135deg,#2757e8,#7c52f2 70%,#0fb3f0)}
+[data-theme=dark] .ai-h{background:linear-gradient(135deg,#3555d8,#6d44e0 70%,#1c9fd8);color:#fff}
+.ai-list{background:color-mix(in srgb,var(--bg) 92%,var(--accent))}
+.ai-chips{background:color-mix(in srgb,var(--bg) 92%,var(--accent))}
+.ai-fab img{border-color:var(--accent-2);box-shadow:0 12px 28px -6px var(--glow),0 0 0 4px color-mix(in srgb,var(--accent-2) 22%,transparent)}
+.scrollbar{background:linear-gradient(90deg,#2757e8,#7c52f2,#0fb3f0,#ff9f43)}
+
+/* teks pada tombol aksen mengikuti tema (dark = teks gelap) */
+[data-theme=dark] .btn:not(.ghost),[data-theme=dark] .nav a.on,[data-theme=dark] .chip[aria-pressed=true],[data-theme=dark] .ico{color:#071027}
+[data-theme=dark] .big.alt .ico{color:#3a2300}
+[data-theme=dark] .banner button{color:#fff}
+.btn.tb-btn:not(.ghost){background:#fff;color:var(--accent);border:0;box-shadow:0 10px 22px -8px rgba(0,0,0,.35)}
+[data-theme=dark] .btn.tb-btn:not(.ghost){background:#fff;color:#1f2f9a}
+.btn.promo-btn:not(.ghost){background:linear-gradient(135deg,var(--accent),var(--accent-2));box-shadow:0 12px 26px -8px var(--glow)}
