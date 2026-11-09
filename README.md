@@ -1,4 +1,4 @@
-# AFU Digital Library — Panduan Lengkap (v3)
+# AFU Digital Library — Panduan Lengkap (v4)
 
 Perpustakaan PDF UTBK: HTML + CSS + JavaScript biasa (tanpa Node.js) + Supabase (database, penyimpanan PDF, login admin).
 Hosting gratis di Netlify. Bisa dipasang di HP seperti aplikasi (PWA).
@@ -8,6 +8,10 @@ Pengunjung (tanpa login): Modul Soal dan Pembahasan per 7 subtes, baca dan downl
 filter kategori dan urutan, favorit (disimpan di browser), tombol salin link, tautan soal ke pembahasan, bagian Terbaru,
 label Baru, ukuran file, hitung mundur UTBK 2027 (hari, jam, menit, detik), pengumuman, halaman Tentang dan FAQ,
 permintaan materi dan lapor masalah lewat DM Instagram, ID/English, Light/Dark, pasang sebagai aplikasi.
+Baru di v4: **Try Out** (timer, simpan otomatis, nilai dihitung server, pengerjaan pertama jadi patokan statistik dan peringkat),
+**Statistik Saya** (grafik perkembangan, rata-rata per subtes, subtes terlemah, target skor, bahas ulang jawaban),
+**Asisten AFU** (chat customer service, bisa AI sungguhan), **Fokus Timer** (Pomodoro), strip angka, streak belajar,
+"Lanjutkan belajar", progres gulir, tombol ke atas, maskot baru di header.
 Admin: upload banyak PDF sekaligus, edit, hapus, pasangkan soal dan pembahasan, atur pengumuman dan tanggal UTBK,
 ekspor daftar ke CSV.
 
@@ -85,7 +89,7 @@ supabase/migrasi-v3.sql      UPGRADE dari versi lama
 
 ---
 # B. Upgrade dari versi lama
-1. SQL Editor → paste isi `supabase/migrasi-v3.sql` → Run (sekali; aman diulang).
+1. SQL Editor → paste isi `supabase/migrasi-v3.sql` (kalau dari v1/v2) lalu `supabase/migrasi-v4.sql` (Try Out) → Run (aman diulang).
 2. Ekstrak ZIP baru, isi `js/config.js` kalau belum, ganti `GANTI-DOMAINMU`, lalu deploy ulang.
 3. Dokumen lama tetap aman; yang belum punya ukuran file hanya tidak menampilkan ukurannya.
 
@@ -111,3 +115,40 @@ supabase/migrasi-v3.sql      UPGRADE dari versi lama
 - Gagal simpan edit/pengaturan: jalankan `migrasi-v3.sql`.
 - Hitung mundur tidak tampil: tanggal di Pengaturan situs kosong/tidak valid.
 - Perubahan tidak terlihat: Ctrl+Shift+R. Karena mode aplikasi memakai cache, tutup dan buka ulang aplikasinya.
+
+---
+# F. Try Out dan Statistik (v4)
+1. Jalankan `supabase/migrasi-v4.sql` di SQL Editor (instalasi baru: sudah ada di `schema.sql`).
+2. `/admin.html` → bagian **Try Out** → isi judul, durasi → **Buat try out** → **Tambah soal**.
+3. Tempel soal dengan format ini (penanda subtes `#PU`, `#PPU`, `#PBM`, `#PK`, `#LBI`, `#LBE`, `#PM`):
+```
+#PU
+1. Teks soal (boleh beberapa baris, x^2, H_{2}O, **tebal**)
+A. Pilihan
+B. Pilihan
+C. Pilihan
+D. Pilihan
+E. Pilihan
+Kunci: C
+Pembahasan: Penjelasan (opsional)
+Gambar: https://... (opsional; atau pakai tombol Unggah gambar)
+```
+   Klik **Periksa format** dulu, lalu **Simpan soal**. Bisa ditambah bertahap.
+4. Cara penilaian: skor subtes 0–1000 = 1000 × benar ÷ jumlah soal; skor total = rata-rata skor subtes; tanpa minus. Ini ESTIMASI, bukan skor IRT resmi.
+5. **Pengerjaan pertama** tiap perangkat dicatat server (satu baris per perangkat per try out) dan jadi dasar statistik dan peringkat. Pengerjaan berikutnya hanya latihan ulang.
+6. Kunci jawaban dan pembahasan tidak bisa dibaca pengunjung lewat API; baru dikirim setelah jawaban dikumpulkan (fungsi `submit_tryout`).
+7. Batasan jujur: tanpa login, "perangkat" = browser. Menghapus data browser atau pakai browser lain dianggap peserta baru. Kalau butuh peringkat anti-curang, tambahkan login siswa.
+
+# G. Asisten AI (v4)
+- **Bawaan (gratis, tanpa server)**: sudah aktif. Menjawab FAQ, mencari dokumen, info hitung mundur, tips, kontak admin.
+- **AI sungguhan (opsional, berbayar per pemakaian)**:
+  1. Install Supabase CLI, `supabase login`, `supabase link --project-ref <ref>`.
+  2. `supabase secrets set ANTHROPIC_API_KEY=sk-ant-...` (key ini TIDAK ditaruh di website).
+  3. `supabase functions deploy afu-assistant --no-verify-jwt`
+  4. Isi `AI_ENDPOINT: "https://<ref>.supabase.co/functions/v1/afu-assistant"` di `js/config.js`, lalu deploy ulang website.
+  5. Model bisa diganti lewat secret `AI_MODEL` (cek nama model terbaru di dokumentasi Anthropic). Batasi `ALLOWED_ORIGIN` ke domainmu.
+  Jika fungsi gagal atau tidak diisi, asisten otomatis kembali ke mode bawaan.
+
+# H. File baru v4
+`js/tryout.js` (Try Out + statistik), `js/tryout-import.js` (parser soal admin), `js/assistant.js` (chat), `supabase/migrasi-v4.sql`,
+`supabase/functions/afu-assistant/index.ts`, `assets/mascot-face.webp` (avatar chat). `assets/mascot-wave.webp` diganti dengan maskot baru.

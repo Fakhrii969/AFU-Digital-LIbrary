@@ -43,8 +43,6 @@
           <label>Subtes<select id="subtest"></select></label>
           <label>Kategori<input id="category" list="cats" placeholder="Contoh: Try Out 2026, Latihan Dasar"><datalist id="cats"></datalist></label>
           <label>Judul<input id="title" placeholder="Contoh: Try Out PU Paket 1"><span class="hint" id="titleHint">Kalau memilih banyak file, judul otomatis diambil dari nama file.</span></label>
-          <label id="pairNewLabel">Pasangkan dengan (opsional, langsung saat upload)<select id="pairNew"></select><span class="hint">Pilih dokumen lawan jenis di subtes yang sama yang belum punya pasangan. Hanya untuk upload satu file.</span></label>
-          <label id="pairFileLabel">Atau upload file pasangan sekaligus (opsional)<input id="pairFile" type="file" accept="application/pdf"><span class="hint">Contoh: Jenis = Modul Soal, file di atas = soal, file di sini = pembahasannya. Otomatis terhubung, judul pasangan ditambah "(Pembahasan)" atau "(Soal)".</span></label>
           <label id="pairLabel" hidden>Pasangan (soal ↔ pembahasan)<select id="pair"></select><span class="hint">Hanya muncul saat mengedit. Dokumen pasangan akan saling terhubung di website.</span></label>
           <label>Deskripsi<textarea id="desc" rows="2" placeholder="Opsional"></textarea></label>
           <label id="fileLabel">File PDF (boleh pilih banyak sekaligus)<input id="file" type="file" accept="application/pdf" multiple></label>
@@ -65,9 +63,40 @@
         </form>
         <p id="setMsg" class="notice" hidden></p>
       </section>
-      <section class="card form">
-        <h2>Permintaan materi <span id="reqCount" class="muted"></span></h2>
-        <div id="reqRows"></div>
+      <section class="card form" id="toCard">
+        <h2>Try Out</h2>
+        <form id="toForm">
+          <label>Judul try out<input id="to_title" placeholder="Contoh: Try Out UTBK Paket 1" required></label>
+          <label>Deskripsi<textarea id="to_desc" rows="2" placeholder="Opsional"></textarea></label>
+          <label>Durasi (menit)<input id="to_dur" type="number" min="1" max="600" value="90" required></label>
+          <label><input id="to_pub" type="checkbox" checked style="display:inline;width:auto;margin:0 .5rem 0 0"> Terbitkan (tampil di website)</label>
+          <div class="btns"><button id="toSave" class="btn" type="submit">Buat try out</button><button id="toCancel" class="btn ghost" type="button" hidden>Batal edit</button></div>
+        </form>
+        <p id="toMsg" class="notice" hidden></p>
+        <div id="toRows"></div>
+
+        <div id="impBox" class="admin-sec" hidden>
+          <h2 id="impTitle">Tambah soal</h2>
+          <p class="muted">Tempel soal dengan format di bawah. Penanda subtes: <b>#PU</b>, <b>#PPU</b>, <b>#PBM</b>, <b>#PK</b>, <b>#LBI</b>, <b>#LBE</b>, <b>#PM</b>.
+          Teks soal mendukung <b>**tebal**</b>, pangkat <b>x^2</b> atau <b>x^{10}</b>, indeks <b>H_{2}O</b>, dan baris baru.</p>
+          <pre class="tq-pre">#PU
+1. Semua kucing berbulu. Tom adalah kucing. Kesimpulannya?
+A. Tom berbulu
+B. Tom tidak berbulu
+C. Tom bukan kucing
+D. Semua berbulu adalah kucing
+E. Tidak dapat disimpulkan
+Kunci: A
+Pembahasan: Premis mayor dan minor menghasilkan kesimpulan A.
+Gambar: https://... (opsional, boleh pakai tombol unggah di bawah)
+
+2. Soal berikutnya ...</pre>
+          <label>Soal<textarea id="impText" class="tq-ta" rows="14" placeholder="#PU&#10;1. ..."></textarea></label>
+          <label>Unggah gambar soal (PNG/JPG/WebP, maks 5 MB). Barisnya &quot;Gambar: link&quot; otomatis disisipkan di posisi kursor.<input id="impImg" type="file" accept="image/png,image/jpeg,image/webp"></label>
+          <div class="btns"><button id="impCheck" class="btn ghost" type="button">Periksa format</button><button id="impSave" class="btn" type="button">Simpan soal</button><button id="impClose" class="btn ghost" type="button">Tutup</button></div>
+          <p id="impMsg" class="notice" hidden></p>
+          <details id="qDet"><summary class="linkbtn">Soal yang sudah tersimpan</summary><div id="qRows" class="tq-list"></div></details>
+        </div>
       </section>
       <section class="card form">
         <h2>Dokumen tersimpan</h2>
@@ -81,6 +110,7 @@
   <script src="/js/config.js"></script>
   <script src="/js/common.js"></script>
   <script>AFU.init();</script>
+  <script src="/js/tryout-import.js"></script>
   <script src="/js/admin.js"></script>
 </body>
 </html>

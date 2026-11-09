@@ -6,20 +6,13 @@
   $("subtest").innerHTML = AFU.SUB.map(k => `<option value="${k}">${SUBN[k]}</option>`).join("");
   const say = (el, text, ok) => { el.textContent = text; el.className = "notice " + (ok ? "ok" : "warn"); el.hidden = !text; };
   let editId = null, rows = {};
-  const OPP = ty => (ty === "soal" ? "pembahasan" : "soal");
-  function refreshPairNew() {
-    const type = $("type").value, sub = $("subtest").value;
-    const opts = Object.values(rows).filter(r => r.type === OPP(type) && r.subtest === sub && !r.pair_id);
-    $("pairNew").innerHTML = '<option value="">Tanpa pasangan</option>' + opts.map(r => `<option value="${r.id}">${esc(r.title)}</option>`).join("");
-  }
-  $("type").addEventListener("change", refreshPairNew); $("subtest").addEventListener("change", refreshPairNew);
 
   if (!AFU.configured) { $("login").hidden = false; say($("loginMsg"), "Isi js/config.js terlebih dahulu.", false); return; }
 
   async function show() {
     const { data: { session } } = await sb.auth.getSession();
     $("login").hidden = !!session; $("panel").hidden = !session;
-    if (session) { $("who").textContent = session.user.email; list(); loadSettings(); loadRequests(); }
+    if (session) { $("who").textContent = session.user.email; list(); loadSettings(); tryouts(); }
   }
   $("loginForm").addEventListener("submit", async e => {
     e.preventDefault();
@@ -52,7 +45,6 @@
     editId = null; $("uploadForm").reset();
     $("formTitle").textContent = "Tambah dokumen PDF"; $("uploadBtn").textContent = "Upload";
     $("fileLabel").hidden = false; $("titleHint").hidden = false; $("cancelEdit").hidden = true; $("pairLabel").hidden = true;
-    $("pairNewLabel").hidden = false; $("pairFileLabel").hidden = false; refreshPairNew();
   }
   function startEdit(id) {
     const d = rows[id]; if (!d) return;
@@ -65,7 +57,6 @@
     $("pairLabel").hidden = false;
     $("formTitle").textContent = "Edit dokumen"; $("uploadBtn").textContent = "Simpan perubahan";
     $("fileLabel").hidden = true; $("titleHint").hidden = true; $("cancelEdit").hidden = false;
-    $("pairNewLabel").hidden = true; $("pairFileLabel").hidden = true;
     say($("upMsg"), "", true);
     $("formCard").scrollIntoView({ behavior: "smooth", block: "start" });
   }
@@ -98,37 +89,18 @@
     if (files.some(f => f.type !== "application/pdf")) return say($("upMsg"), "Semua file harus berformat PDF.", false);
     if (files.length === 1 && !title) return say($("upMsg"), "Isi judul dokumen.", false);
 
-    const pairId = $("pairNew").value || null, pairFile = $("pairFile").files[0] || null;
-    if (files.length > 1 && (pairId || pairFile)) return say($("upMsg"), "Pasangan hanya bisa dipilih kalau upload satu file.", false);
-    if (pairFile && pairFile.type !== "application/pdf") return say($("upMsg"), "File pasangan harus berformat PDF.", false);
-    if (pairFile && pairFile.size > MAX) return say($("upMsg"), "File pasangan lebih dari 50 MB.", false);
     btn.disabled = true; let ok = 0; const failed = [];
-    // unggah satu file + catat di tabel; mengembalikan id dokumen
-    const send = async (f, ty, ttl, idx, extra) => {
-      const safe = f.name.toLowerCase().replace(/[^a-z0-9._-]+/g, "-");
-      const path = `${ty}/${subtest}/${Date.now()}-${idx}-${safe}`;
-      const up = await sb.storage.from(C.BUCKET).upload(path, f, { contentType: "application/pdf" });
-      if (up.error) throw new Error(up.error.message);
-      const id = crypto.randomUUID();
-      const ins = await sb.from("documents").insert({ id, type: ty, subtest, category, title: ttl, description, file_path: path, size_bytes: f.size, ...extra });
-      if (ins.error) { await sb.storage.from(C.BUCKET).remove([path]); throw new Error(ins.error.message); }
-      return id;
-    };
     for (const [i, f] of files.entries()) {
       say($("upMsg"), `Mengunggah ${i + 1} dari ${files.length}: ${f.name}`, true);
       if (f.size > MAX) { failed.push(f.name + " (lebih dari 50 MB)"); continue; }
       const docTitle = files.length === 1 ? title : f.name.replace(/\.pdf$/i, "").replace(/[_-]+/g, " ").trim();
-      try {
-        const id = await send(f, type, docTitle, i, pairId ? { pair_id: pairId } : {});
-        ok++;
-        if (pairId) await sb.from("documents").update({ pair_id: id }).eq("id", pairId);
-        if (pairFile) {
-          say($("upMsg"), `Mengunggah pasangan: ${pairFile.name}`, true);
-          const pid = await send(pairFile, OPP(type), docTitle + (type === "soal" ? " (Pembahasan)" : " (Soal)"), i + 100, { pair_id: id });
-          await sb.from("documents").update({ pair_id: pid }).eq("id", id);
-          ok++;
-        }
-      } catch (err) { failed.push(f.name + ": " + err.message); }
+      const safe = f.name.toLowerCase().replace(/[^a-z0-9._-]+/g, "-");
+      const path = `${type}/${subtest}/${Date.now()}-${i}-${safe}`;
+      const up = await sb.storage.from(C.BUCKET).upload(path, f, { contentType: "application/pdf" });
+      if (up.error) { failed.push(f.name + ": " + up.error.message); continue; }
+      const ins = await sb.from("documents").insert({ type, subtest, category, title: docTitle, description, file_path: path, size_bytes: f.size });
+      if (ins.error) { await sb.storage.from(C.BUCKET).remove([path]); failed.push(f.name + ": " + ins.error.message); continue; }
+      ok++;
     }
     btn.disabled = false;
     if (!failed.length) { resetForm(); say($("upMsg"), `${ok} dokumen berhasil ditambahkan.`, true); }
@@ -141,11 +113,10 @@
     const { data, error } = await sb.from("documents").select("*").order("created_at", { ascending: false });
     if (error) return ($("rows").innerHTML = `<p class="notice warn">${esc(error.message)}</p>`);
     rows = Object.fromEntries(data.map(d => [d.id, d]));
-    refreshPairNew();
     $("cats").innerHTML = [...new Set(data.map(d => d.category).filter(Boolean))].map(c => `<option value="${esc(c)}">`).join("");
     $("rows").innerHTML = data.length ? data.map(d => `
       <div class="row"><div><strong>${esc(d.title)}</strong>
-        <div class="muted">${d.type === "soal" ? "Modul Soal" : "Pembahasan"} · ${esc(SUBN[d.subtest])}${d.category ? " · " + esc(d.category) : ""}${d.size_bytes ? " · " + AFU.fmtSize(d.size_bytes) : ""}${d.hits ? " · " + d.hits + "× dibuka" : ""}${d.pair_id && rows[d.pair_id] ? " · berpasangan" : ""}</div></div>
+        <div class="muted">${d.type === "soal" ? "Modul Soal" : "Pembahasan"} · ${esc(SUBN[d.subtest])}${d.category ? " · " + esc(d.category) : ""}${d.size_bytes ? " · " + AFU.fmtSize(d.size_bytes) : ""}${d.pair_id && rows[d.pair_id] ? " · berpasangan" : ""}</div></div>
         <div class="row-btns">
           <button class="btn ghost sm edit" data-edit="${d.id}" type="button">Edit</button>
           <button class="btn ghost sm danger" data-del="${d.id}" data-path="${esc(d.file_path)}" type="button">Hapus</button>
@@ -160,25 +131,110 @@
       list();
     }));
   }
-  // ---- permintaan materi dari pengunjung ----
-  async function loadRequests() {
-    const box = $("reqRows"); if (!box) return;
-    const { data, error } = await sb.from("requests").select("*").order("created_at", { ascending: false }).limit(100);
-    if (error) { box.innerHTML = `<p class="notice warn">${esc(error.message)} (sudah menjalankan migrasi-v4.sql?)</p>`; return; }
-    const baru = data.filter(r => !r.done).length;
-    $("reqCount").textContent = baru ? `(${baru} baru)` : "";
-    box.innerHTML = data.length ? data.map(r => `
-      <div class="row"><div><strong>${esc(r.message)}</strong>
-        <div class="muted">${r.subtest ? esc(SUBN[r.subtest]) : "Semua subtes"}${r.contact ? " · " + esc(r.contact) : ""} · ${new Date(r.created_at).toLocaleDateString("id-ID")}${r.done ? " · selesai" : ""}</div></div>
+
+  // ---- try out ----
+  let toEdit = null, toRows = {}, impTo = null;
+  const toSay = (text, ok) => say($("toMsg"), text, ok);
+  const impSay = (text, ok) => say($("impMsg"), text, ok);
+  const dbHint = " (sudah menjalankan migrasi-v4.sql?)";
+  function toReset() { toEdit = null; $("toForm").reset(); $("to_dur").value = 90; $("to_pub").checked = true; $("toSave").textContent = "Buat try out"; $("toCancel").hidden = true; }
+  $("toCancel").addEventListener("click", toReset);
+  $("toForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    const row = { title: $("to_title").value.trim(), description: $("to_desc").value.trim() || null, duration_min: +$("to_dur").value || 90, published: $("to_pub").checked };
+    if (!row.title) return toSay("Judul tidak boleh kosong.", false);
+    const r = toEdit ? await sb.from("tryouts").update(row).eq("id", toEdit) : await sb.from("tryouts").insert(row);
+    if (r.error) return toSay("Gagal menyimpan: " + r.error.message + dbHint, false);
+    toSay(toEdit ? "Perubahan disimpan." : "Try out dibuat. Klik Tambah soal untuk mengisi soalnya.", true);
+    toReset(); tryouts();
+  });
+  async function tryouts() {
+    const { data, error } = await sb.from("tryouts").select("*").order("created_at", { ascending: false });
+    if (error) return ($("toRows").innerHTML = `<p class="notice warn">${esc(error.message)}${dbHint}</p>`);
+    toRows = Object.fromEntries(data.map(d => [d.id, d]));
+    const cnt = {}, att = {};
+    const q = await sb.from("tryout_questions").select("tryout_id").limit(5000);
+    (q.data || []).forEach(r => (cnt[r.tryout_id] = (cnt[r.tryout_id] || 0) + 1));
+    const a = await sb.from("tryout_attempts").select("tryout_id,score").limit(5000);
+    (a.data || []).forEach(r => { const o = (att[r.tryout_id] ||= { n: 0, s: 0 }); o.n++; o.s += r.score; });
+    $("toRows").innerHTML = data.length ? data.map(d => `
+      <div class="row"><div><strong>${esc(d.title)}</strong>
+        <div class="muted">${cnt[d.id] || 0} soal · ${d.duration_min} menit · ${d.published ? "Terbit" : "Disembunyikan"}${att[d.id] ? ` · ${att[d.id].n} peserta, rata-rata ${Math.round(att[d.id].s / att[d.id].n)}` : ""}</div></div>
         <div class="row-btns">
-          <button class="btn ghost sm" data-rdone="${r.id}" data-v="${!r.done}" type="button">${r.done ? "Buka lagi" : "Selesai"}</button>
-          <button class="btn ghost sm danger" data-rdel="${r.id}" type="button">Hapus</button>
-        </div></div>`).join("") : '<p class="notice">Belum ada permintaan.</p>';
-    box.querySelectorAll("[data-rdone]").forEach(b => b.addEventListener("click", async () => { await sb.from("requests").update({ done: b.dataset.v === "true" }).eq("id", b.dataset.rdone); loadRequests(); }));
-    box.querySelectorAll("[data-rdel]").forEach(b => b.addEventListener("click", async () => { if (!confirm("Hapus permintaan ini?")) return; await sb.from("requests").delete().eq("id", b.dataset.rdel); loadRequests(); }));
+          <button class="btn sm" data-addq="${d.id}" type="button">Tambah soal</button>
+          <button class="btn ghost sm edit" data-toedit="${d.id}" type="button">Edit</button>
+          <button class="btn ghost sm danger" data-todel="${d.id}" type="button">Hapus</button>
+        </div></div>`).join("") : '<p class="notice">Belum ada try out.</p>';
   }
+  $("toRows").addEventListener("click", async e => {
+    const b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.toedit) {
+      const d = toRows[b.dataset.toedit]; toEdit = d.id;
+      $("to_title").value = d.title; $("to_desc").value = d.description || ""; $("to_dur").value = d.duration_min; $("to_pub").checked = d.published;
+      $("toSave").textContent = "Simpan perubahan"; $("toCancel").hidden = false; $("toCard").scrollIntoView({ behavior: "smooth" });
+    } else if (b.dataset.todel) {
+      if (!confirm("Hapus try out ini beserta semua soal dan hasil pesertanya?")) return;
+      const r = await sb.from("tryouts").delete().eq("id", b.dataset.todel);
+      if (r.error) return toSay("Gagal menghapus: " + r.error.message, false);
+      if (impTo === b.dataset.todel) $("impBox").hidden = true;
+      tryouts();
+    } else if (b.dataset.addq) {
+      impTo = b.dataset.addq; $("impTitle").textContent = "Tambah soal: " + toRows[impTo].title;
+      $("impBox").hidden = false; impSay("", true); $("impBox").scrollIntoView({ behavior: "smooth" }); qList();
+    }
+  });
+  $("impClose").addEventListener("click", () => ($("impBox").hidden = true));
+  function impParse() {
+    const r = AFU_parseTO($("impText").value);
+    const by = {}; r.qs.forEach(x => (by[x.subtest] = (by[x.subtest] || 0) + 1));
+    const sum = Object.entries(by).map(([k, v]) => k.toUpperCase() + " " + v).join(", ") || "-";
+    return { r, sum };
+  }
+  $("impCheck").addEventListener("click", () => {
+    const { r, sum } = impParse();
+    impSay(`Terbaca ${r.qs.length} soal (${sum}).` + (r.errors.length ? " Perbaiki: " + r.errors.slice(0, 6).join("; ") : " Format sudah benar."), !r.errors.length && r.qs.length > 0);
+  });
+  $("impSave").addEventListener("click", async () => {
+    if (!impTo) return;
+    const { r } = impParse();
+    if (r.errors.length) return impSay("Perbaiki dulu: " + r.errors.slice(0, 6).join("; "), false);
+    if (!r.qs.length) return impSay("Belum ada soal yang terbaca.", false);
+    const btn = $("impSave"); btn.disabled = true;
+    const last = await sb.from("tryout_questions").select("position").eq("tryout_id", impTo).order("position", { ascending: false }).limit(1);
+    let base = (last.data?.[0]?.position ?? -1) + 1, ok = 0;
+    for (let i = 0; i < r.qs.length; i += 50) {
+      const chunk = r.qs.slice(i, i + 50).map((x, j) => ({ ...x, tryout_id: impTo, position: base + i + j }));
+      const ins = await sb.from("tryout_questions").insert(chunk);
+      if (ins.error) { btn.disabled = false; return impSay(`${ok} soal tersimpan, lalu gagal: ${ins.error.message}`, false); }
+      ok += chunk.length;
+    }
+    btn.disabled = false; $("impText").value = ""; impSay(`${ok} soal berhasil disimpan.`, true); qList(); tryouts();
+  });
+  $("impImg").addEventListener("change", async e => {
+    const f = e.target.files[0]; if (!f) return;
+    if (f.size > 5 * 1024 * 1024) { e.target.value = ""; return impSay("Gambar lebih dari 5 MB.", false); }
+    impSay("Mengunggah gambar...", true);
+    const path = `${impTo || "umum"}/${Date.now()}-${f.name.toLowerCase().replace(/[^a-z0-9._-]+/g, "-")}`;
+    const up = await sb.storage.from("tryout-img").upload(path, f, { contentType: f.type });
+    e.target.value = "";
+    if (up.error) return impSay("Gagal mengunggah: " + up.error.message + dbHint, false);
+    const url = sb.storage.from("tryout-img").getPublicUrl(path).data.publicUrl;
+    const ta = $("impText"), pos = ta.selectionStart ?? ta.value.length;
+    ta.value = ta.value.slice(0, pos) + (pos && ta.value[pos - 1] !== "\n" ? "\n" : "") + "Gambar: " + url + "\n" + ta.value.slice(pos);
+    impSay("Gambar diunggah dan barisnya disisipkan.", true);
+  });
+  async function qList() {
+    const { data, error } = await sb.from("tryout_questions").select("id,subtest,position,body,answer").eq("tryout_id", impTo).order("position").limit(1000);
+    if (error) return ($("qRows").innerHTML = `<p class="notice warn">${esc(error.message)}</p>`);
+    $("qRows").innerHTML = data.length ? data.map(d => `<div class="row"><div><strong>${esc(d.subtest.toUpperCase())}</strong> <span class="muted">${esc(d.body.slice(0, 90))} · kunci ${"ABCDE"[d.answer]}</span></div>
+      <button class="btn ghost sm danger" data-qdel="${d.id}" type="button">Hapus</button></div>`).join("") : '<p class="muted">Belum ada soal.</p>';
+  }
+  $("qRows").addEventListener("click", async e => {
+    const b = e.target.closest("[data-qdel]"); if (!b || !confirm("Hapus soal ini?")) return;
+    await sb.from("tryout_questions").delete().eq("id", b.dataset.qdel); qList(); tryouts();
+  });
   $("csvBtn").addEventListener("click", () => {
-    const cols = ["type", "subtest", "category", "title", "description", "size_bytes", "hits", "created_at", "file_path"];
+    const cols = ["type", "subtest", "category", "title", "description", "size_bytes", "created_at", "file_path"];
     const q = v => '"' + String(v ?? "").replace(/"/g, '""') + '"';
     const lines = [cols.join(","), ...Object.values(rows).map(d => [...cols.map(c => q(d[c])), q(AFU.url(d.file_path))].join(","))];
     lines[0] += ",public_url";
