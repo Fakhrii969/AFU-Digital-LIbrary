@@ -185,7 +185,7 @@
   });
   $("impClose").addEventListener("click", () => ($("impBox").hidden = true));
   function impParse() {
-    const r = AFU_parseTO($("impText").value);
+    const r = AFU_parseTO($("impText").value, $("impSub").value);
     const by = {}; r.qs.forEach(x => (by[x.subtest] = (by[x.subtest] || 0) + 1));
     const sum = Object.entries(by).map(([k, v]) => k.toUpperCase() + " " + v).join(", ") || "-";
     return { r, sum };
@@ -209,6 +209,50 @@
       ok += chunk.length;
     }
     btn.disabled = false; $("impText").value = ""; impSay(`${ok} soal berhasil disimpan.`, true); qList(); tryouts();
+  });
+  // ---- form input satu soal ----
+  const fqSay = (text, ok) => say($("fqMsg"), text, ok);
+  let fqUrl = "";
+  async function uploadImg(f) {
+    if (f.size > 5 * 1024 * 1024) throw new Error("Gambar lebih dari 5 MB.");
+    const path = `${impTo || "umum"}/${Date.now()}-${f.name.toLowerCase().replace(/[^a-z0-9._-]+/g, "-")}`;
+    const up = await sb.storage.from("tryout-img").upload(path, f, { contentType: f.type });
+    if (up.error) throw new Error("Gagal mengunggah: " + up.error.message + dbHint);
+    return sb.storage.from("tryout-img").getPublicUrl(path).data.publicUrl;
+  }
+  function fqReset() {
+    ["fqBody", "fqA", "fqB", "fqC", "fqD", "fqE", "fqExp"].forEach(i => ($(i).value = ""));
+    $("fqKey").value = ""; $("fqImg").value = ""; fqUrl = ""; $("fqPrev").hidden = true; $("fqPrevImg").removeAttribute("src");
+  }
+  $("fqImg").addEventListener("change", async e => {
+    const f = e.target.files[0]; if (!f) return;
+    fqSay("Mengunggah foto...", true);
+    try {
+      fqUrl = await uploadImg(f);
+      $("fqPrevImg").src = fqUrl; $("fqPrev").hidden = false; fqSay("Foto terunggah.", true);
+    } catch (err) { fqUrl = ""; e.target.value = ""; fqSay(err.message, false); }
+  });
+  $("fqImgDel").addEventListener("click", () => { fqUrl = ""; $("fqImg").value = ""; $("fqPrev").hidden = true; $("fqPrevImg").removeAttribute("src"); fqSay("Foto dihapus dari soal ini.", true); });
+  $("fqClear").addEventListener("click", () => { fqReset(); fqSay("", true); });
+  $("fqSave").addEventListener("click", async () => {
+    if (!impTo) return;
+    const sub = $("impSub").value, body = $("fqBody").value.trim();
+    const opts = ["fqA", "fqB", "fqC", "fqD", "fqE"].map(i => $(i).value.trim());
+    let n = opts.findIndex(o => !o); if (n < 0) n = 5;
+    if (!sub) return fqSay("Pilih subtes dulu (kotak paling atas).", false);
+    if (!body) return fqSay("Soal belum diisi.", false);
+    if (n < 2) return fqSay("Isi minimal pilihan A dan B.", false);
+    if (opts.slice(n).some(o => o)) return fqSay("Isi pilihan secara berurutan, jangan ada yang dikosongkan di tengah.", false);
+    const key = $("fqKey").value;
+    if (key === "") return fqSay("Pilih kunci jawabannya.", false);
+    if (+key >= n) return fqSay("Kunci menunjuk ke pilihan yang kosong.", false);
+    const btn = $("fqSave"); btn.disabled = true;
+    const last = await sb.from("tryout_questions").select("position").eq("tryout_id", impTo).order("position", { ascending: false }).limit(1);
+    const row = { tryout_id: impTo, subtest: sub, position: (last.data?.[0]?.position ?? -1) + 1, body, options: opts.slice(0, n), answer: +key, explanation: $("fqExp").value.trim() || null, image_url: fqUrl || null };
+    const ins = await sb.from("tryout_questions").insert(row);
+    btn.disabled = false;
+    if (ins.error) return fqSay("Gagal menyimpan: " + ins.error.message + dbHint, false);
+    fqReset(); fqSay("Soal tersimpan. Silakan isi soal berikutnya.", true); $("fqBody").focus(); qList(); tryouts();
   });
   $("impImg").addEventListener("change", async e => {
     const f = e.target.files[0]; if (!f) return;

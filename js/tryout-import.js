@@ -1,9 +1,9 @@
 // Parser format soal try out (dipakai admin). Contoh format ada di admin.html.
 (function (root) {
   const SUBS = ["pu", "ppu", "pbm", "pk", "lbi", "lbe", "pm"];
-  function parse(text) {
+  function parse(text, defSub) {
     const qs = [], errors = [];
-    let sub = null, cur = null, field = null;
+    let sub = SUBS.includes(String(defSub || "").toLowerCase()) ? String(defSub).toLowerCase() : null, cur = null, field = null;
     const lines = String(text || "").replace(/\r/g, "").split("\n");
     const flush = () => {
       if (!cur) return;
@@ -31,7 +31,7 @@
         }
       }
       if (!cur) { if (line.trim()) errors.push("Teks di luar soal diabaikan: " + line.trim().slice(0, 40)); continue; }
-      if ((m = line.match(/^\s*(?:kunci|jawaban|key|answer)\s*[:=]\s*([A-Ea-e])\b/i))) { cur.answer = "abcde".indexOf(m[1].toLowerCase()); field = null; continue; }
+      if ((m = line.match(/^\s*(?:(?:kunci|key)\s*[:=]?|(?:jawaban|answer)\s*[:=])\s*([A-Ea-e])\b/i))) { cur.answer = "abcde".indexOf(m[1].toLowerCase()); field = null; continue; }
       if ((m = line.match(/^\s*(?:pembahasan|penjelasan|explanation)\s*[:=]\s*(.*)$/i))) { cur.explanation = m[1]; field = "exp"; continue; }
       if ((m = line.match(/^\s*(?:gambar|image|img)\s*[:=]\s*(https:\/\/\S+)/i))) { cur.image = m[1]; field = null; continue; }
       if ((m = line.match(/^\s*([A-Ea-e])\s*[.)]\s*(.*)$/)) && "abcde".indexOf(m[1].toLowerCase()) === cur.options.length && cur.answer === null) {
@@ -45,6 +45,28 @@
     // soal tanpa subtes sudah dicatat sebagai error; buang yang bertanda skip
     return { qs, errors };
   }
-  root.AFU_parseTO = parse;
-  if (typeof module !== "undefined") module.exports = parse;
+  // Format cepat: soal dipisah baris "---", nomor boleh dihilangkan, "#PU" boleh dihilangkan jika subtes dipilih (defSub).
+  // Format lama (#PU + nomor 1. 2. 3.) tetap bisa dipakai.
+  function parseAny(text, defSub) {
+    const t = String(text || "").replace(/\r/g, "");
+    if (!/^\s*-{3,}\s*$/m.test(t)) return parse(t, defSub);
+    const qs = [], errors = [];
+    t.split(/^\s*-{3,}\s*$/m).forEach((blk, i) => {
+      if (!blk.trim()) return;
+      let b = blk.replace(/^\s*\n/, "");
+      const lines = b.split("\n");
+      let k = 0; while (k < lines.length && !lines[k].trim()) k++;
+      const hasHead = /^\s*[#\[=]\s*[A-Za-z]{2,3}\s*[\]=]?\s*$/.test(lines[k] || "");
+      const first = hasHead ? (lines[k + 1] || "") : (lines[k] || "");
+      const hasNum = /^\s*\d{1,3}\s*[.)]/.test(first);
+      let txt = b;
+      if (!hasNum) { const arr = lines.slice(); arr.splice(hasHead ? k + 1 : k, 0, "1. "); txt = arr.join("\n").replace(/^(\s*\d{1,3}\s*[.)])\s*\n/m, "$1 "); }
+      const r = parse(txt, defSub);
+      r.qs.forEach(q => qs.push(q));
+      r.errors.forEach(e => errors.push(hasNum ? e : e.replace(/^Soal \d+/, "Soal ke-" + (i + 1))));
+    });
+    return { qs, errors };
+  }
+  root.AFU_parseTO = parseAny;
+  if (typeof module !== "undefined") module.exports = parseAny;
 })(typeof window !== "undefined" ? window : globalThis);

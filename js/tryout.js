@@ -22,9 +22,9 @@
     to_q_of: (n, m) => `Soal ${n} dari ${m}`, to_flag: "Ragu-ragu", to_prev: "Sebelumnya", to_next: "Berikutnya",
     to_clear: "Hapus jawaban", to_finish: "Selesai", to_nav: "Navigasi soal",
     to_lg_done: "Terjawab", to_lg_flag: "Ragu-ragu", to_lg_empty: "Kosong",
-    to_c_t: "Kirim jawaban sekarang?",
+    to_c_t: "Anda yakin mengirim jawaban Anda?", to_c_chk: "Saya sudah memeriksa kembali jawaban saya",
     to_c_d: (a, e, f) => `Terjawab ${a}, kosong ${e}${f ? `, ditandai ragu-ragu ${f}` : ""}. Setelah dikirim, jawaban tidak bisa diubah.`,
-    to_c_back: "Lanjut mengerjakan", to_c_send: "Kirim sekarang",
+    to_c_back: "Cek kembali", to_c_send: "Kirim",
     to_leave: "Pengerjaan sedang berjalan. Jawabanmu tetap tersimpan sebagai draft. Tetap keluar?",
     to_timeup: "Waktu habis. Jawabanmu dikirim otomatis.", to_left5: "Sisa waktu 5 menit!",
     to_sending: "Menghitung nilai...", to_send_err: "Gagal mengirim jawaban. Jawabanmu aman di perangkat ini. Periksa koneksi lalu coba lagi.",
@@ -70,9 +70,9 @@
     to_q_of: (n, m) => `Question ${n} of ${m}`, to_flag: "Mark for review", to_prev: "Previous", to_next: "Next",
     to_clear: "Clear answer", to_finish: "Finish", to_nav: "Question navigator",
     to_lg_done: "Answered", to_lg_flag: "Marked", to_lg_empty: "Empty",
-    to_c_t: "Submit your answers now?",
+    to_c_t: "Are you sure you want to submit your answers?", to_c_chk: "I have double-checked my answers",
     to_c_d: (a, e, f) => `Answered ${a}, empty ${e}${f ? `, marked ${f}` : ""}. You cannot change answers after submitting.`,
-    to_c_back: "Keep working", to_c_send: "Submit now",
+    to_c_back: "Check again", to_c_send: "Submit",
     to_leave: "A test is in progress. Your answers stay saved as a draft. Leave anyway?",
     to_timeup: "Time is up. Your answers were submitted automatically.", to_left5: "5 minutes left!",
     to_sending: "Calculating your score...", to_send_err: "Could not submit. Your answers are safe on this device. Check your connection and try again.",
@@ -352,7 +352,9 @@
       <div class="q-nav">
         <button class="btn ghost" type="button" data-act="prev" ${X.cur === 0 ? "disabled" : ""}>${ICO.back}${esc(t("to_prev"))}</button>
         <button class="linkbtn" type="button" data-act="clear" ${a === undefined ? "hidden" : ""}>${esc(t("to_clear"))}</button>
-        <button class="btn" type="button" data-act="next" ${X.cur === n - 1 ? "disabled" : ""}>${esc(t("to_next"))}${ICO.next}</button>
+        ${X.cur === n - 1
+          ? `<button class="btn finish" type="button" data-act="finish">${ICO.check}${esc(t("to_finish"))}</button>`
+          : `<button class="btn" type="button" data-act="next">${esc(t("to_next"))}${ICO.next}</button>`}
       </div>`;
     let idx = 0, html = "";
     SUB.filter(k => X.qs.some(x => x.subtest === k)).forEach(k => {
@@ -382,6 +384,7 @@
     const a = b.dataset.act;
     if (a === "prev") goTo(X.cur - 1);
     else if (a === "next") goTo(X.cur + 1);
+    else if (a === "finish") confirmFinish();
     else if (a === "clear") { delete X.ans[q.id]; saveDraft(); paint(); }
     else if (a === "flag") { X.flag.has(q.id) ? X.flag.delete(q.id) : X.flag.add(q.id); saveDraft(); paint(); }
   }
@@ -409,10 +412,12 @@
     if (!X || X.sending) return;
     const n = X.qs.length, a = Object.keys(X.ans).length;
     const d = dialog(`<h3>${esc(t("to_c_t"))}</h3><p>${esc(t("to_c_d", a, n - a, X.flag.size))}</p>
-      <div class="btns"><button class="btn ghost" type="button" id="dBack">${esc(t("to_c_back"))}</button><button class="btn" type="button" id="dSend">${esc(t("to_c_send"))}</button></div>`);
+      <label class="dlg-chk"><input type="checkbox" id="dChk"><span>${esc(t("to_c_chk"))}</span></label>
+      <div class="btns"><button class="btn ghost" type="button" id="dBack">${esc(t("to_c_back"))}</button><button class="btn" type="button" id="dSend" disabled>${esc(t("to_c_send"))}</button></div>`);
     $("dBack").onclick = () => d.remove();
-    $("dSend").onclick = () => { d.remove(); submit(); };
-    $("dSend").focus();
+    $("dChk").onchange = e => { $("dSend").disabled = !e.target.checked; };
+    $("dSend").onclick = () => { if (!$("dChk").checked) return; d.remove(); submit(); };
+    $("dChk").focus();
   }
 
   // ---------- 4) kirim + hasil ----------

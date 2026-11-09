@@ -77,24 +77,62 @@
 
         <div id="impBox" class="admin-sec" hidden>
           <h2 id="impTitle">Tambah soal</h2>
-          <p class="muted">Tempel soal dengan format di bawah. Penanda subtes: <b>#PU</b>, <b>#PPU</b>, <b>#PBM</b>, <b>#PK</b>, <b>#LBI</b>, <b>#LBE</b>, <b>#PM</b>.
-          Teks soal mendukung <b>**tebal**</b>, pangkat <b>x^2</b> atau <b>x^{10}</b>, indeks <b>H_{2}O</b>, dan baris baru.</p>
-          <pre class="tq-pre">#PU
-1. Semua kucing berbulu. Tom adalah kucing. Kesimpulannya?
+          <label>Subtes untuk soal yang ditambahkan
+            <select id="impSub">
+              <option value="">- pilih subtes -</option>
+              <option value="pu">PU - Penalaran Umum</option>
+              <option value="ppu">PPU - Pengetahuan dan Pemahaman Umum</option>
+              <option value="pbm">PBM - Pemahaman Bacaan dan Menulis</option>
+              <option value="pk">PK - Pengetahuan Kuantitatif</option>
+              <option value="lbi">LBI - Literasi Bahasa Indonesia</option>
+              <option value="lbe">LBE - Literasi Bahasa Inggris</option>
+              <option value="pm">PM - Penalaran Matematika</option>
+            </select></label>
+          <p class="muted">Teks soal dan pilihan mendukung <b>**tebal**</b>, pangkat <b>x^2</b> atau <b>x^{10}</b>, indeks <b>H_{2}O</b>, dan baris baru.</p>
+
+          <details id="fqDet" open>
+            <summary class="linkbtn"><b>Cara 1: isi lewat form (paling mudah)</b></summary>
+            <div class="admin-sec">
+              <label>Soal<textarea id="fqBody" rows="4" placeholder="Tulis soalnya di sini"></textarea></label>
+              <div class="fq-opts">
+                <label><b>A</b><input id="fqA" placeholder="Pilihan A"></label>
+                <label><b>B</b><input id="fqB" placeholder="Pilihan B"></label>
+                <label><b>C</b><input id="fqC" placeholder="Pilihan C (opsional)"></label>
+                <label><b>D</b><input id="fqD" placeholder="Pilihan D (opsional)"></label>
+                <label><b>E</b><input id="fqE" placeholder="Pilihan E (opsional)"></label>
+              </div>
+              <label>Kunci jawaban
+                <select id="fqKey"><option value="">- pilih kunci -</option><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option><option value="4">E</option></select></label>
+              <label>Pembahasan (opsional)<textarea id="fqExp" rows="3" placeholder="Jelaskan jawaban yang benar"></textarea></label>
+              <label>Foto soal (opsional, PNG/JPG/WebP, maks 5 MB)<input id="fqImg" type="file" accept="image/png,image/jpeg,image/webp"></label>
+              <div id="fqPrev" class="fq-prev" hidden><img id="fqPrevImg" alt="Pratinjau foto soal"><button id="fqImgDel" class="btn ghost sm danger" type="button">Hapus foto</button></div>
+              <div class="btns"><button id="fqSave" class="btn" type="button">Simpan soal ini</button><button id="fqClear" class="btn ghost" type="button">Kosongkan form</button></div>
+              <p id="fqMsg" class="notice" hidden></p>
+            </div>
+          </details>
+
+          <details id="pasteDet">
+            <summary class="linkbtn"><b>Cara 2: tempel banyak soal sekaligus</b></summary>
+            <div class="admin-sec">
+          <p class="muted">Pilih subtes di atas, lalu pisahkan tiap soal dengan baris <b>---</b>. Nomor soal dan penanda <b>#PU</b> tidak perlu ditulis. Format lama (<b>#PU</b> + nomor 1. 2. 3.) tetap bisa dipakai.</p>
+          <pre class="tq-pre">Semua kucing berbulu. Tom adalah kucing. Kesimpulannya?
 A. Tom berbulu
 B. Tom tidak berbulu
 C. Tom bukan kucing
-D. Semua berbulu adalah kucing
-E. Tidak dapat disimpulkan
 Kunci: A
 Pembahasan: Premis mayor dan minor menghasilkan kesimpulan A.
-Gambar: https://... (opsional, boleh pakai tombol unggah di bawah)
-
-2. Soal berikutnya ...</pre>
+---
+Soal berikutnya ...
+A. ...
+B. ...
+Kunci: B
+Gambar: https://... (opsional, boleh pakai tombol unggah di bawah)</pre>
           <label>Soal<textarea id="impText" class="tq-ta" rows="14" placeholder="#PU&#10;1. ..."></textarea></label>
           <label>Unggah gambar soal (PNG/JPG/WebP, maks 5 MB). Barisnya &quot;Gambar: link&quot; otomatis disisipkan di posisi kursor.<input id="impImg" type="file" accept="image/png,image/jpeg,image/webp"></label>
           <div class="btns"><button id="impCheck" class="btn ghost" type="button">Periksa format</button><button id="impSave" class="btn" type="button">Simpan soal</button><button id="impClose" class="btn ghost" type="button">Tutup</button></div>
           <p id="impMsg" class="notice" hidden></p>
+            </div>
+          </details>
           <details id="qDet"><summary class="linkbtn">Soal yang sudah tersimpan</summary><div id="qRows" class="tq-list"></div></details>
         </div>
       </section>
