@@ -587,12 +587,12 @@ if (typeof AFU !== "undefined" && !AFU.TO) {
   ];
   const ALL = GROUPS.map(g => g.sel).join(","), MAG = ".promo-btn,.soc,.ctrl .icon-btn";
   const groupOf = el => GROUPS.find(g => el.matches(g.sel));
-  const resetT = el => { el.style.removeProperty("--rx"); el.style.removeProperty("--ry"); };
+  const resetT = el => { el.style.removeProperty("--rx"); el.style.removeProperty("--ry"); el.classList.remove("touching"); };
   const resetM = el => { el.style.translate = ""; };
   let px = 0, py = 0, has = false, pRaf = 0, curT = null, curM = null;
 
   // satu titik kursor -> cari kartu di bawahnya -> miringkan + gerakkan cahaya di dalamnya
-  const point = (x, y, target) => {
+  const point = (x, y, target, k = 1) => {
     const el = target && target.closest ? target.closest(ALL) : null;
     if (curT && curT !== el) resetT(curT); // kursor keluar dari kartu -> kartu kembali lurus
     curT = el;
@@ -601,8 +601,8 @@ if (typeof AFU !== "undefined" && !AFU.TO) {
     if (g.minWidth && innerWidth < g.minWidth) return resetT(el);
     const r = el.getBoundingClientRect();
     const fx = clamp((x - r.left) / r.width, 0, 1), fy = clamp((y - r.top) / r.height, 0, 1); // posisi kursor di dalam kartu, 0..1
-    el.style.setProperty("--ry", (DIR * (fx - .5) * 2 * g.max).toFixed(2) + "deg");
-    el.style.setProperty("--rx", (-DIR * (fy - .5) * 2 * g.max).toFixed(2) + "deg");
+    el.style.setProperty("--ry", (DIR * (fx - .5) * 2 * g.max * k).toFixed(2) + "deg");
+    el.style.setProperty("--rx", (-DIR * (fy - .5) * 2 * g.max * k).toFixed(2) + "deg");
     el.style.setProperty("--mx", (fx * 100).toFixed(1) + "%"); // posisi cahaya aurora di dalam kartu
     el.style.setProperty("--my", (fy * 100).toFixed(1) + "%");
   };
@@ -636,6 +636,39 @@ if (typeof AFU !== "undefined" && !AFU.TO) {
       if (curT) resetT(curT); curT = null;
       if (curM) resetM(curM); curM = null;
     });
+  }
+
+  // ===== layar sentuh (HP/tablet): tahan kartu = miring + cahaya ikut jari; aurora latar bergeser saat digulir =====
+  if (!reduce) {
+    const TK = .75; // tilt di HP sedikit lebih kecil dari di laptop
+    let hold = 0, on = false, sRaf = 0;
+    const nudge = () => { if (!auRun) { auRun = true; requestAnimationFrame(auLoop); } };
+    const endTouch = () => { clearTimeout(hold); on = false; if (curT) { resetT(curT); curT = null; } };
+    addEventListener("pointerdown", e => {
+      if (e.pointerType === "mouse") return;
+      const x = e.clientX, y = e.clientY, t = e.target;
+      clearTimeout(hold);
+      hold = setTimeout(() => { // tahan sebentar dulu supaya gulir biasa tidak ikut memiringkan kartu
+        on = true; point(x, y, t, TK);
+        if (curT) curT.classList.add("touching");
+      }, 90);
+    }, { passive: true });
+    addEventListener("pointermove", e => {
+      if (!on || e.pointerType === "mouse") return;
+      point(e.clientX, e.clientY, e.target, TK);
+      if (curT) curT.classList.add("touching");
+      tx = e.clientX - innerWidth / 2; ty = e.clientY - innerHeight / 2; nudge(); // aurora latar ikut jari
+    }, { passive: true });
+    addEventListener("pointerup", endTouch, { passive: true });
+    addEventListener("pointercancel", endTouch, { passive: true }); // mulai menggulir -> kartu kembali lurus
+    addEventListener("scroll", () => { // aurora latar bergeser pelan mengikuti gulir
+      if (sRaf) return;
+      sRaf = requestAnimationFrame(() => {
+        sRaf = 0;
+        if (on) return;
+        tx = Math.sin(scrollY / 420) * 110; ty = Math.cos(scrollY / 520) * 90; nudge();
+      });
+    }, { passive: true });
   }
 
   // ===== muncul halus saat digulir + dipasang ulang tiap halaman dirender =====

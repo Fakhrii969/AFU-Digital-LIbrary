@@ -1071,3 +1071,21 @@ html.theme-fade *, html.theme-fade *::before, html.theme-fade *::after{
     radial-gradient(260px circle at calc(var(--mx) + 22%) calc(var(--my) + 30%), var(--cl4), transparent 70%),
     radial-gradient(240px circle at calc(var(--mx) - 24%) calc(var(--my) - 28%), var(--cl5), transparent 70%);
 }
+
+/* ---------- 16) efek layar sentuh (HP/tablet): tahan kartu = miring + cahaya aurora ikut jari ---------- */
+.card.big.touching::before,
+.card.book.touching::before,
+.card.doc.touching::before,
+.card.to-card.touching::before{opacity:1}
+@media(hover:none){
+  a.card.big, a.card.book, a.card.to-card, .card.doc{
+    transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));
+    transition:transform .18s ease-out, border-color .2s, box-shadow .2s;
+    will-change:transform;
+  }
+  a.card.big.touching, a.card.book.touching, a.card.to-card.touching, .card.doc.touching{
+    box-shadow:var(--shadow-lg), 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+  }
+  .btn:active, .chip:active, .soc:active, .ctrl .icon-btn:active{transform:scale(.94)}
+  .aurora i{filter:blur(48px)}
+}
