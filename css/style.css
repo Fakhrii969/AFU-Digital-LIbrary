@@ -785,11 +785,11 @@ a.card:hover,.st:hover{border-color:var(--accent);box-shadow:var(--shadow-lg),0 
 [data-theme=dark] .btn.tb-btn:not(.ghost){background:#fff;color:#1f2f9a}
 .btn.promo-btn:not(.ghost){background:linear-gradient(135deg,var(--accent),var(--accent-2));box-shadow:0 12px 26px -8px var(--glow)}
 
-/* ================= v8: aurora ikut kursor + semua kartu miring menghadap kursor ================= */
+/* ================= v8: aurora ikut kursor, kartu kaca, semua kartu dan heksagon miring menghadap kursor ================= */
 
 /* ---------- warna aurora (palet biru AFU) ---------- */
-:root{--au1:rgba(39,87,232,.40);--au2:rgba(15,179,240,.36);--au3:rgba(124,82,242,.32);--au4:rgba(255,159,67,.28)}
-[data-theme=dark]{--au1:rgba(79,110,255,.48);--au2:rgba(34,200,255,.32);--au3:rgba(140,92,255,.42);--au4:rgba(255,140,60,.20)}
+:root{--au1:rgba(39,87,232,.46);--au2:rgba(15,179,240,.40);--au3:rgba(124,82,242,.36);--au4:rgba(255,159,67,.32)}
+[data-theme=dark]{--au1:rgba(79,110,255,.52);--au2:rgba(34,200,255,.36);--au3:rgba(140,92,255,.46);--au4:rgba(255,140,60,.24)}
 
 /* ---------- aurora: 4 gumpalan cahaya, digeser JS mengikuti kursor ---------- */
 html.has-aurora body::before{content:none;display:none}
@@ -803,16 +803,28 @@ html.has-aurora body::before{content:none;display:none}
 @media(hover:none){.aurora i{animation:none;filter:blur(44px)}}
 @media(prefers-reduced-motion:reduce){.aurora i{animation:none!important}}
 
-/* ---------- semua kartu miring menghadap kursor (nilai --rx / --ry diisi JS) ---------- */
-@media(hover:hover) and (pointer:fine){
-  a.card.big,a.card.book,a.card.to-card,.card.doc{transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .25s ease-out,border-color .2s,box-shadow .2s}
-  a.card.big:hover,a.card.book:hover,a.card.to-card:hover,.card.doc:hover{transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) translateY(-3px)}
-  a.card.big:active,a.card.book:active,a.card.to-card:active{transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) scale(.985)}
+/* ---------- kartu kaca: tembus pandang supaya aurora tetap kelihatan di dalam kotak ---------- */
+:root{--g1:58%;--g2:48%}
+@media(max-width:820px){:root{--g1:86%;--g2:80%}}
+.card:not(.skel):not(.dlg-card),.kpi,.st,.faq details{
+  background:linear-gradient(180deg,color-mix(in srgb,var(--surface) var(--g1),transparent),color-mix(in srgb,var(--surface-2) var(--g2),transparent))}
+@media(min-width:821px){
+  .card:not(.skel):not(.dlg-card),.kpi,.st,.faq details{-webkit-backdrop-filter:blur(14px) saturate(1.35);backdrop-filter:blur(14px) saturate(1.35)}
 }
 
-/* ---------- heksagon beranda ikut gerak kursor (desktop) ---------- */
-@media(min-width:821px) and (hover:hover){
-  .honey{transform:perspective(1000px) rotateY(var(--hx,0deg)) rotateX(var(--hy,0deg));transition:transform .25s ease-out}
+/* ---------- miring menghadap kursor: kartu dan heksagon (nilai --rx / --ry diisi JS) ---------- */
+@media(hover:hover) and (pointer:fine){
+  a.card.big,a.card.book,a.card.to-card,.card.doc{
+    transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));
+    transition:transform .18s ease-out,border-color .2s,box-shadow .2s}
+  a.card.big:hover,a.card.book:hover,a.card.to-card:hover,.card.doc:hover{
+    transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) translateY(-3px)}
+  a.card.big:active,a.card.book:active,a.card.to-card:active{
+    transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) scale(.985)}
+
+  .hex{transform:perspective(420px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .15s ease-out,filter .2s}
+  .hex:hover{transform:perspective(420px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) scale(1.12)}
+  .hex:active{transform:perspective(420px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) scale(.95)}
 }
 
 /* ---------- tombol magnetik ---------- */
