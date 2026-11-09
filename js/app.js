@@ -114,7 +114,7 @@
   function docCard(d, tag) {
     const loc = AFU.lang === "id" ? "id-ID" : "en-US";
     const date = new Date(d.created_at).toLocaleDateString(loc, { day: "numeric", month: "short", year: "numeric" });
-    const meta = [AFU.fmtSize(d.size_bytes), t("added") + " " + date].filter(Boolean).join(" \u00B7 ");
+    const meta = [AFU.fmtSize(d.size_bytes), t("added") + " " + date].filter(Boolean).join(" · ");
     const url = AFU.url(d.file_path);
     const partner = d.pair_id && cache.byId?.[d.pair_id];
     const on = favs().includes(d.id);
@@ -144,7 +144,7 @@
     let seen = ""; try { seen = sessionStorage.getItem("afu-ban"); } catch (e) {}
     if (!txt || seen === txt) { b.hidden = true; return; }
     b.hidden = false;
-    b.innerHTML = `<div class="wrap banner-in"><span>${esc(txt)}</span><button type="button" id="banX" aria-label="${esc(t("close"))}">\u00D7</button></div>`;
+    b.innerHTML = `<div class="wrap banner-in"><span>${esc(txt)}</span><button type="button" id="banX" aria-label="${esc(t("close"))}">×</button></div>`;
     document.getElementById("banX").onclick = () => { try { sessionStorage.setItem("afu-ban", txt); } catch (e) {} b.hidden = true; };
   }
 
@@ -247,7 +247,7 @@
     const docs = LS.get("afu-recent", []).map(id => cache.byId?.[id]).filter(Boolean);
     if (!docs.length) { box.innerHTML = ""; return; }
     box.innerHTML = `<h2 class="how-t">${esc(t("rc_t"))}</h2><div class="grid2">${docs.slice(0, 2).map(d =>
-      docCard(d, `${t(d.type === "soal" ? "modul_t" : "pemb_t")} \u00B7 ${ABBR[d.subtest]}`)).join("")}</div>`;
+      docCard(d, `${t(d.type === "soal" ? "modul_t" : "pemb_t")} · ${ABBR[d.subtest]}`)).join("")}</div>`;
     stagger();
   }
 
@@ -346,7 +346,7 @@
       const all = await loadAll(), box = document.getElementById("latest");
       if (!box || !all.length) return;
       box.innerHTML = `<h2 class="how-t">${esc(t("latest"))}</h2><div class="grid2">${all.slice(0, 6).map(d =>
-        docCard(d, `${t(d.type === "soal" ? "modul_t" : "pemb_t")} \u00B7 ${ABBR[d.subtest]}`)).join("")}</div>`;
+        docCard(d, `${t(d.type === "soal" ? "modul_t" : "pemb_t")} · ${ABBR[d.subtest]}`)).join("")}</div>`;
       stagger(); fillRecent();
     } catch (e) {}
   }
@@ -360,7 +360,7 @@
       const res = all.filter(d => (d.title + " " + (d.description || "") + " " + (d.category || "")).toLowerCase().includes(v)).slice(0, 12);
       if (!box.isConnected) return;
       box.innerHTML = res.length
-        ? `<div class="grid2 gres-list">${res.map(d => docCard(d, `${t(d.type === "soal" ? "modul_t" : "pemb_t")} \u00B7 ${ABBR[d.subtest]}`)).join("")}</div>`
+        ? `<div class="grid2 gres-list">${res.map(d => docCard(d, `${t(d.type === "soal" ? "modul_t" : "pemb_t")} · ${ABBR[d.subtest]}`)).join("")}</div>`
         : `<p class="notice">${esc(t("no_match"))}</p>`;
       stagger();
     } catch (e) { box.innerHTML = `<p class="notice warn">${esc(t("err"))}</p>`; }
@@ -443,7 +443,7 @@
       <section class="wrap page">
         <a class="back" href="/">${ICON.back}${esc(t("back"))}</a>
         <h1>${esc(t("fav_t"))}</h1><p class="lead sm">${esc(t("fav_note"))}</p>
-        ${list.length ? `<div class="grid2">${list.map(d => docCard(d, `${t(d.type === "soal" ? "modul_t" : "pemb_t")} \u00B7 ${ABBR[d.subtest]}`)).join("")}</div>`
+        ${list.length ? `<div class="grid2">${list.map(d => docCard(d, `${t(d.type === "soal" ? "modul_t" : "pemb_t")} · ${ABBR[d.subtest]}`)).join("")}</div>`
           : `<p class="notice">${esc(t("fav_empty"))}</p>`}
       </section>`;
     stagger();
@@ -659,42 +659,42 @@
   let box, input, list, items = [], idx = 0, lastFocus = null, docsReady = false;
 
   const pageItems = () => [
-    { sec: L("Halaman", "Pages"), ic: "\uD83C\uDFE0", t: L("Beranda", "Home"), s: "/", run: () => go("/") },
-    { sec: L("Halaman", "Pages"), ic: "\uD83D\uDCDA", t: AFU.t("nav_modul"), s: "/modul", run: () => go("/modul") },
-    { sec: L("Halaman", "Pages"), ic: "\u2705", t: AFU.t("nav_pemb"), s: "/pembahasan", run: () => go("/pembahasan") },
-    { sec: L("Halaman", "Pages"), ic: "\uD83D\uDCDD", t: AFU.t("nav_to"), s: "/tryout", run: () => go("/tryout") },
-    { sec: L("Halaman", "Pages"), ic: "\uD83D\uDCCA", t: L("Statistik saya", "My stats"), s: "/tryout/statistik", run: () => go("/tryout/statistik") },
-    { sec: L("Halaman", "Pages"), ic: "\u2B50", t: AFU.t("nav_fav"), s: "/favorit", run: () => go("/favorit") },
-    { sec: L("Halaman", "Pages"), ic: "\u2139\uFE0F", t: AFU.t("nav_about"), s: "/tentang", run: () => go("/tentang") }
+    { sec: L("Halaman", "Pages"), ic: "🏠", t: L("Beranda", "Home"), s: "/", run: () => go("/") },
+    { sec: L("Halaman", "Pages"), ic: "📚", t: AFU.t("nav_modul"), s: "/modul", run: () => go("/modul") },
+    { sec: L("Halaman", "Pages"), ic: "✅", t: AFU.t("nav_pemb"), s: "/pembahasan", run: () => go("/pembahasan") },
+    { sec: L("Halaman", "Pages"), ic: "📝", t: AFU.t("nav_to"), s: "/tryout", run: () => go("/tryout") },
+    { sec: L("Halaman", "Pages"), ic: "📊", t: L("Statistik saya", "My stats"), s: "/tryout/statistik", run: () => go("/tryout/statistik") },
+    { sec: L("Halaman", "Pages"), ic: "⭐", t: AFU.t("nav_fav"), s: "/favorit", run: () => go("/favorit") },
+    { sec: L("Halaman", "Pages"), ic: "ℹ️", t: AFU.t("nav_about"), s: "/tentang", run: () => go("/tentang") }
   ];
 
   const actionItems = () => [
-    { sec: L("Aksi", "Actions"), ic: "\uD83C\uDF17", t: L("Ganti tema terang/gelap", "Toggle light/dark theme"), k: "T", run: () => document.getElementById("themeBtn")?.click() },
-    { sec: L("Aksi", "Actions"), ic: "\uD83C\uDF10", t: L("Ganti bahasa ID/EN", "Switch language ID/EN"), k: "L", run: () => document.getElementById("langBtn")?.click() },
-    { sec: L("Aksi", "Actions"), ic: "\u23F1\uFE0F", t: L("Buka Fokus Timer", "Open Focus Timer"), run: () => {
+    { sec: L("Aksi", "Actions"), ic: "🌗", t: L("Ganti tema terang/gelap", "Toggle light/dark theme"), k: "T", run: () => document.getElementById("themeBtn")?.click() },
+    { sec: L("Aksi", "Actions"), ic: "🌐", t: L("Ganti bahasa ID/EN", "Switch language ID/EN"), k: "L", run: () => document.getElementById("langBtn")?.click() },
+    { sec: L("Aksi", "Actions"), ic: "⏱️", t: L("Buka Fokus Timer", "Open Focus Timer"), run: () => {
       go("/");
       setTimeout(() => document.getElementById("pomo")?.scrollIntoView({ behavior: "smooth", block: "center" }), 450);
     } },
-    { sec: L("Aksi", "Actions"), ic: "\u2328\uFE0F", t: L("Lihat pintasan keyboard", "Show keyboard shortcuts"), k: "?", run: () => setTimeout(openHelp, 60) },
-    { sec: L("Aksi", "Actions"), ic: "\uD83D\uDD17", t: L("Salin link halaman ini", "Copy this page link"), run: () => { if (window.AFUApp) AFUApp.copy(location.href); } }
+    { sec: L("Aksi", "Actions"), ic: "⌨️", t: L("Lihat pintasan keyboard", "Show keyboard shortcuts"), k: "?", run: () => setTimeout(openHelp, 60) },
+    { sec: L("Aksi", "Actions"), ic: "🔗", t: L("Salin link halaman ini", "Copy this page link"), run: () => { if (window.AFUApp) AFUApp.copy(location.href); } }
   ];
 
   const subItems = () => {
     const out = [];
     SUBS.forEach(k => {
-      out.push({ sec: L("Subtes: Modul Soal", "Subtests: Question modules"), ic: "\uD83D\uDCD8", t: ABBR[k] + " \u00B7 " + AFU.t("s_" + k), s: "/modul/" + k, run: () => go("/modul/" + k) });
+      out.push({ sec: L("Subtes: Modul Soal", "Subtests: Question modules"), ic: "📘", t: ABBR[k] + " · " + AFU.t("s_" + k), s: "/modul/" + k, run: () => go("/modul/" + k) });
     });
     SUBS.forEach(k => {
-      out.push({ sec: L("Subtes: Pembahasan", "Subtests: Solutions"), ic: "\uD83D\uDCD7", t: ABBR[k] + " \u00B7 " + AFU.t("s_" + k), s: "/pembahasan/" + k, run: () => go("/pembahasan/" + k) });
+      out.push({ sec: L("Subtes: Pembahasan", "Subtests: Solutions"), ic: "📗", t: ABBR[k] + " · " + AFU.t("s_" + k), s: "/pembahasan/" + k, run: () => go("/pembahasan/" + k) });
     });
     return out;
   };
 
   const docItems = () => ((window.AFUApp && AFUApp.docs) || []).map(d => ({
     sec: L("Dokumen", "Documents"),
-    ic: d.type === "soal" ? "\uD83D\uDCC4" : "\uD83D\uDCA1",
+    ic: d.type === "soal" ? "📄" : "💡",
     t: d.title,
-    s: (d.type === "soal" ? AFU.t("modul_t") : AFU.t("pemb_t")) + " \u00B7 " + (ABBR[d.subtest] || d.subtest) + (d.category ? " \u00B7 " + d.category : ""),
+    s: (d.type === "soal" ? AFU.t("modul_t") : AFU.t("pemb_t")) + " · " + (ABBR[d.subtest] || d.subtest) + (d.category ? " · " + d.category : ""),
     run: () => go((d.type === "soal" ? "/modul/" : "/pembahasan/") + d.subtest)
   }));
 
@@ -705,7 +705,7 @@
     for (const w of words) {
       const i = s.indexOf(w);
       if (i < 0) return -1;
-      sc += i === 0 ? 3 : /[\s\u00B7\-/]/.test(s[i - 1]) ? 2 : 1;
+      sc += i === 0 ? 3 : /[\s·\-/]/.test(s[i - 1]) ? 2 : 1;
     }
     return sc;
   };
@@ -746,7 +746,7 @@
       <div class="cp-in"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
         <input id="cpIn" type="text" role="combobox" aria-expanded="true" aria-controls="cpList" autocomplete="off" spellcheck="false"></div>
       <ul class="cp-list" id="cpList" role="listbox"></ul>
-      <div class="cp-foot"><span><kbd>\u2191</kbd> <kbd>\u2193</kbd> <span data-l="nav"></span></span><span><kbd>Enter</kbd> <span data-l="open"></span></span><span><kbd>Esc</kbd> <span data-l="close"></span></span></div></div>`;
+      <div class="cp-foot"><span><kbd>↑</kbd> <kbd>↓</kbd> <span data-l="nav"></span></span><span><kbd>Enter</kbd> <span data-l="open"></span></span><span><kbd>Esc</kbd> <span data-l="close"></span></span></div></div>`;
     document.body.appendChild(box);
     input = box.querySelector("#cpIn"); list = box.querySelector("#cpList");
     box.addEventListener("mousedown", e => { if (e.target === box) closePalette(true); });
@@ -793,7 +793,7 @@
     if (!ctrl || document.getElementById("cpBtn")) return;
     const b = document.createElement("button");
     b.id = "cpBtn"; b.type = "button"; b.className = "cp-btn";
-    b.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><span id="cpBtnT"></span><kbd>${isMac ? "\u2318K" : "Ctrl K"}</kbd>`;
+    b.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><span id="cpBtnT"></span><kbd>${isMac ? "⌘K" : "Ctrl K"}</kbd>`;
     b.addEventListener("click", openPalette);
     ctrl.insertBefore(b, ctrl.firstChild);
     labelButton();
@@ -815,7 +815,7 @@
   function openHelp() {
     if (!help) buildHelp();
     const rows = [
-      [isMac ? "\u2318 K" : "Ctrl K", L("Pencarian cepat", "Quick search")],
+      [isMac ? "⌘ K" : "Ctrl K", L("Pencarian cepat", "Quick search")],
       ["/", L("Fokus ke kotak cari beranda", "Focus the home search box")],
       ["H", L("Ke beranda", "Go home")],
       ["M", AFU.t("modul_t")],
@@ -868,22 +868,22 @@
   const level = xp => Math.floor(xp / 100) + 1;
 
   const BADGES = [
-    { ic: "\uD83D\uDCD6", n: ["Pembuka Buku", "First Page"], ok: (x) => x.opens >= 1 },
-    { ic: "\uD83D\uDCDA", n: ["Kutu Buku (25 dokumen)", "Bookworm (25 docs)"], ok: (x) => x.opens >= 25 },
-    { ic: "\uD83C\uDF45", n: ["Fokus Pemula", "Focus Rookie"], ok: (x) => x.pomoAll >= 1 },
-    { ic: "\uD83D\uDD25", n: ["Streak 3 hari", "3-day streak"], ok: (x, s) => s >= 3 },
-    { ic: "\u26A1", n: ["Streak 7 hari", "7-day streak"], ok: (x, s) => s >= 7 },
-    { ic: "\uD83D\uDC51", n: ["Streak 30 hari", "30-day streak"], ok: (x, s) => s >= 30 },
-    { ic: "\uD83C\uDFAF", n: ["Target tercapai", "Goal reached"], ok: (x) => x.goals >= 1 },
-    { ic: "\uD83C\uDFC6", n: ["Konsisten (7 target)", "Consistent (7 goals)"], ok: (x) => x.goals >= 7 },
-    { ic: "\uD83D\uDE80", n: ["Level 5", "Level 5"], ok: (x) => level(x.total) >= 5 }
+    { ic: "📖", n: ["Pembuka Buku", "First Page"], ok: (x) => x.opens >= 1 },
+    { ic: "📚", n: ["Kutu Buku (25 dokumen)", "Bookworm (25 docs)"], ok: (x) => x.opens >= 25 },
+    { ic: "🍅", n: ["Fokus Pemula", "Focus Rookie"], ok: (x) => x.pomoAll >= 1 },
+    { ic: "🔥", n: ["Streak 3 hari", "3-day streak"], ok: (x, s) => s >= 3 },
+    { ic: "⚡", n: ["Streak 7 hari", "7-day streak"], ok: (x, s) => s >= 7 },
+    { ic: "👑", n: ["Streak 30 hari", "30-day streak"], ok: (x, s) => s >= 30 },
+    { ic: "🎯", n: ["Target tercapai", "Goal reached"], ok: (x) => x.goals >= 1 },
+    { ic: "🏆", n: ["Konsisten (7 target)", "Consistent (7 goals)"], ok: (x) => x.goals >= 7 },
+    { ic: "🚀", n: ["Level 5", "Level 5"], ok: (x) => level(x.total) >= 5 }
   ];
 
   function award(points, why) {
     const x = xpData(), before = level(x.total);
     x.total += points; store.set(XK, x);
-    if (level(x.total) > before) toast(L("Naik ke level ", "Level up! Now level ") + level(x.total) + " \uD83C\uDF89");
-    else if (why) toast("+" + points + " XP \u00B7 " + why);
+    if (level(x.total) > before) toast(L("Naik ke level ", "Level up! Now level ") + level(x.total) + " 🎉");
+    else if (why) toast("+" + points + " XP · " + why);
   }
 
   // dokumen yang dibuka hari ini dihitung sekali per dokumen
@@ -900,7 +900,7 @@
     }
     store.set(DK, d);
     award(10, L("buka dokumen", "opened a document"));
-    if (bonus) setTimeout(() => { award(20); toast(L("Target harian tercapai! +20 XP \uD83C\uDFAF", "Daily goal reached! +20 XP \uD83C\uDFAF")); }, 1900);
+    if (bonus) setTimeout(() => { award(20); toast(L("Target harian tercapai! +20 XP 🎯", "Daily goal reached! +20 XP 🎯")); }, 1900);
     paintGoal();
   });
 
@@ -924,9 +924,9 @@
     const lv = level(x.total), cur = x.total % 100;
     const done = d.ids.length >= d.goal;
     return `<div class="goal-ring${done ? " done" : ""}" style="--p:${pct}" role="img" aria-label="${n}/${d.goal}"><b>${n}/${d.goal}</b></div>
-      <div><h2 id="goalT">${esc(done ? L("Target hari ini tercapai! \uD83C\uDF89", "Today's goal reached! \uD83C\uDF89") : L("Target belajar hari ini", "Today's study goal"))}</h2>
+      <div><h2 id="goalT">${esc(done ? L("Target hari ini tercapai! 🎉", "Today's goal reached! 🎉") : L("Target belajar hari ini", "Today's study goal"))}</h2>
         <p>${esc(L("Buka " + d.goal + " dokumen hari ini untuk mengumpulkan XP.", "Open " + d.goal + " documents today to earn XP."))}</p>
-        <div class="goal-ctl"><button type="button" data-g="-1" aria-label="${esc(L("Kurangi target", "Decrease goal"))}">\u2212</button>
+        <div class="goal-ctl"><button type="button" data-g="-1" aria-label="${esc(L("Kurangi target", "Decrease goal"))}">−</button>
           <span>${esc(L(d.goal + " dokumen", d.goal + " docs"))}</span>
           <button type="button" data-g="1" aria-label="${esc(L("Tambah target", "Increase goal"))}">+</button></div></div>
       <div class="xp"><span class="xp-lv">Lv ${lv}</span><div class="xp-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${cur}"><i style="width:${cur}%"></i></div><span class="xp-n">${x.total} XP</span></div>
