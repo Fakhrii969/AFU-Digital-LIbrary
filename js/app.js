@@ -535,3 +535,92 @@
     });
   })();
 })();
+
+// ---------- v8: aurora ikut kursor, semua kartu miring menghadap kursor, tombol magnetik, heksagon ----------
+(() => {
+  const fine = matchMedia("(hover:hover) and (pointer:fine)").matches;
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const app = document.getElementById("app");
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  // --- aurora: 4 gumpalan cahaya, diselipkan sebagai latar ---
+  const au = document.createElement("div");
+  au.className = "aurora"; au.setAttribute("aria-hidden", "true");
+  au.innerHTML = "<i></i><i></i><i></i><i></i>";
+  document.body.prepend(au);
+  document.documentElement.classList.add("has-aurora");
+  const blobs = [...au.children], FOLLOW = [.32, .20, .28, .16]; // makin besar = makin jauh ikut kursor
+  let ax = 0, ay = 0, tx = 0, ty = 0, auRun = false;
+  const auLoop = () => {
+    ax += (tx - ax) * .06; ay += (ty - ay) * .06; // gerak halus, ada "ekor"
+    blobs.forEach((b, i) => { b.style.translate = `${(ax * FOLLOW[i]).toFixed(1)}px ${(ay * FOLLOW[i]).toFixed(1)}px`; });
+    if (Math.abs(tx - ax) > .3 || Math.abs(ty - ay) > .3) requestAnimationFrame(auLoop); else auRun = false;
+  };
+
+  // --- kartu: SEMUA kartu miring menghadap kursor ---
+  const TILT = ".card.big,.card.book,.card.doc,.card.to-card", MAG = ".promo-btn,.soc,.ctrl .icon-btn";
+  const DIST = 520; // jarak kursor ke kartu yang membuat miringnya maksimal
+  let px = 0, py = 0, has = false, tRaf = 0, curM = null;
+  const tiltAll = () => {
+    tRaf = 0; if (!has) return;
+    const els = [...document.querySelectorAll(TILT)];
+    const rects = els.map(el => el.getBoundingClientRect()); // baca semua dulu, baru tulis
+    els.forEach((el, i) => {
+      const r = rects[i];
+      if (r.bottom < -150 || r.top > innerHeight + 150) return; // kartu di luar layar dilewati
+      const nx = clamp((px - (r.left + r.width / 2)) / DIST, -1, 1), ny = clamp((py - (r.top + r.height / 2)) / DIST, -1, 1);
+      const max = el.classList.contains("doc") ? 5 : 9;
+      el.style.setProperty("--ry", (nx * max).toFixed(2) + "deg");
+      el.style.setProperty("--rx", (-ny * max).toFixed(2) + "deg");
+    });
+  };
+  const schedTilt = () => { if (has && !tRaf) tRaf = requestAnimationFrame(tiltAll); };
+  const resetM = el => { el.style.translate = ""; };
+
+  if (fine && !reduce) {
+    addEventListener("pointermove", e => {
+      if (e.pointerType !== "mouse") return;
+      px = e.clientX; py = e.clientY; has = true;
+      schedTilt();
+
+      // aurora
+      tx = px - innerWidth / 2; ty = py - innerHeight / 2;
+      if (!auRun) { auRun = true; requestAnimationFrame(auLoop); }
+
+      // tombol magnetik
+      const m = e.target.closest?.(MAG);
+      if (curM && curM !== m) resetM(curM);
+      curM = m;
+      if (m) {
+        const r = m.getBoundingClientRect();
+        m.style.translate = `${((px - (r.left + r.width / 2)) * .25).toFixed(1)}px ${((py - (r.top + r.height / 2)) * .25).toFixed(1)}px`;
+      }
+
+      // heksagon beranda
+      const h = document.querySelector(".honey");
+      if (h && innerWidth > 820) {
+        h.style.setProperty("--hx", ((px / innerWidth - .5) * 14).toFixed(2) + "deg");
+        h.style.setProperty("--hy", (-(py / innerHeight - .5) * 10).toFixed(2) + "deg");
+      }
+    }, { passive: true });
+    addEventListener("scroll", schedTilt, { passive: true }); // kartu bergeser saat gulir, hitung ulang miringnya
+    document.documentElement.addEventListener("mouseleave", () => {
+      has = false;
+      document.querySelectorAll(TILT).forEach(el => { el.style.removeProperty("--rx"); el.style.removeProperty("--ry"); });
+      if (curM) resetM(curM); curM = null;
+    });
+  }
+
+  // --- muncul halus saat digulir + pasang ulang tiap halaman dirender ---
+  let scan = () => {};
+  if (!reduce && app && "IntersectionObserver" in window) {
+    const io = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) { en.target.classList.add("in"); io.unobserve(en.target); } }), { threshold: .12, rootMargin: "0px 0px -5% 0px" });
+    const SEL = ".promo,.count,.how-t,.steps,.faq,.req,.tbanner,.pomo";
+    scan = () => app.querySelectorAll(SEL).forEach(el => { if (el.dataset.rv) return; el.dataset.rv = "1"; el.classList.add("reveal"); io.observe(el); });
+  }
+  if (app) {
+    let mRaf = 0;
+    new MutationObserver(() => { if (!mRaf) mRaf = requestAnimationFrame(() => { mRaf = 0; scan(); schedTilt(); }); }).observe(app, { childList: true, subtree: true });
+    scan();
+  }
+})();
