@@ -536,14 +536,14 @@
   })();
 })();
 
-// ---------- v8: aurora ikut kursor, semua kartu miring menghadap kursor, tombol magnetik, heksagon ----------
+// ---------- v8: aurora ikut kursor, semua kartu + heksagon miring menghadap kursor, tombol magnetik ----------
 (() => {
   const fine = matchMedia("(hover:hover) and (pointer:fine)").matches;
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const app = document.getElementById("app");
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
-  // --- aurora: 4 gumpalan cahaya, diselipkan sebagai latar ---
+  // ===== aurora: 4 gumpalan cahaya, diselipkan sebagai latar =====
   const au = document.createElement("div");
   au.className = "aurora"; au.setAttribute("aria-hidden", "true");
   au.innerHTML = "<i></i><i></i><i></i><i></i>";
@@ -557,21 +557,27 @@
     if (Math.abs(tx - ax) > .3 || Math.abs(ty - ay) > .3) requestAnimationFrame(auLoop); else auRun = false;
   };
 
-  // --- kartu: SEMUA kartu miring menghadap kursor ---
-  const TILT = ".card.big,.card.book,.card.doc,.card.to-card", MAG = ".promo-btn,.soc,.ctrl .icon-btn";
-  const DIST = 520; // jarak kursor ke kartu yang membuat miringnya maksimal
+  // ===== miring menghadap kursor =====
+  // DIR = 1  -> sisi kartu yang dekat kursor "menghadap" kursor. Ubah ke -1 kalau mau kebalikannya.
+  const DIR = 1;
+  // max = sudut miring maksimal (derajat). mx / my = jarak (px) kursor dari tengah supaya miringnya maksimal.
+  const GROUPS = [
+    { sel: ".card.big,.card.book,.card.to-card", max: 12, mx: 220, my: 160 }, // kartu besar, subtes, try out
+    { sel: ".card.doc", max: 8, mx: 260, my: 130 },                          // kartu dokumen
+    { sel: ".hex", max: 32, mx: 180, my: 180 }                              // heksagon beranda
+  ];
+  const ALL = GROUPS.map(g => g.sel).join(","), MAG = ".promo-btn,.soc,.ctrl .icon-btn";
   let px = 0, py = 0, has = false, tRaf = 0, curM = null;
   const tiltAll = () => {
     tRaf = 0; if (!has) return;
-    const els = [...document.querySelectorAll(TILT)];
-    const rects = els.map(el => el.getBoundingClientRect()); // baca semua dulu, baru tulis
-    els.forEach((el, i) => {
-      const r = rects[i];
-      if (r.bottom < -150 || r.top > innerHeight + 150) return; // kartu di luar layar dilewati
-      const nx = clamp((px - (r.left + r.width / 2)) / DIST, -1, 1), ny = clamp((py - (r.top + r.height / 2)) / DIST, -1, 1);
-      const max = el.classList.contains("doc") ? 5 : 9;
-      el.style.setProperty("--ry", (nx * max).toFixed(2) + "deg");
-      el.style.setProperty("--rx", (-ny * max).toFixed(2) + "deg");
+    const items = [];
+    GROUPS.forEach(g => document.querySelectorAll(g.sel).forEach(el => items.push([el, g, el.getBoundingClientRect()]))); // baca semua dulu, baru tulis
+    items.forEach(([el, g, r]) => {
+      if (r.bottom < -150 || r.top > innerHeight + 150) return; // di luar layar dilewati
+      const nx = clamp((px - (r.left + r.width / 2)) / Math.max(r.width / 2, g.mx), -1, 1);
+      const ny = clamp((py - (r.top + r.height / 2)) / Math.max(r.height / 2, g.my), -1, 1);
+      el.style.setProperty("--ry", (DIR * nx * g.max).toFixed(2) + "deg");
+      el.style.setProperty("--rx", (-DIR * ny * g.max).toFixed(2) + "deg");
     });
   };
   const schedTilt = () => { if (has && !tRaf) tRaf = requestAnimationFrame(tiltAll); };
@@ -583,7 +589,7 @@
       px = e.clientX; py = e.clientY; has = true;
       schedTilt();
 
-      // aurora
+      // aurora ikut kursor
       tx = px - innerWidth / 2; ty = py - innerHeight / 2;
       if (!auRun) { auRun = true; requestAnimationFrame(auLoop); }
 
@@ -595,23 +601,16 @@
         const r = m.getBoundingClientRect();
         m.style.translate = `${((px - (r.left + r.width / 2)) * .25).toFixed(1)}px ${((py - (r.top + r.height / 2)) * .25).toFixed(1)}px`;
       }
-
-      // heksagon beranda
-      const h = document.querySelector(".honey");
-      if (h && innerWidth > 820) {
-        h.style.setProperty("--hx", ((px / innerWidth - .5) * 14).toFixed(2) + "deg");
-        h.style.setProperty("--hy", (-(py / innerHeight - .5) * 10).toFixed(2) + "deg");
-      }
     }, { passive: true });
     addEventListener("scroll", schedTilt, { passive: true }); // kartu bergeser saat gulir, hitung ulang miringnya
     document.documentElement.addEventListener("mouseleave", () => {
       has = false;
-      document.querySelectorAll(TILT).forEach(el => { el.style.removeProperty("--rx"); el.style.removeProperty("--ry"); });
+      document.querySelectorAll(ALL).forEach(el => { el.style.removeProperty("--rx"); el.style.removeProperty("--ry"); });
       if (curM) resetM(curM); curM = null;
     });
   }
 
-  // --- muncul halus saat digulir + pasang ulang tiap halaman dirender ---
+  // ===== muncul halus saat digulir + dipasang ulang tiap halaman dirender =====
   let scan = () => {};
   if (!reduce && app && "IntersectionObserver" in window) {
     const io = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) { en.target.classList.add("in"); io.unobserve(en.target); } }), { threshold: .12, rootMargin: "0px 0px -5% 0px" });
