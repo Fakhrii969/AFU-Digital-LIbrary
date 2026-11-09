@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /admin
+
+Sitemap: https://afu-digital-library.pages.dev/sitemap.xml

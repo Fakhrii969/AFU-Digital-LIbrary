@@ -1,5 +1,5 @@
 // Service worker sederhana: jaringan dulu, cadangan dari cache jika offline. PDF/Supabase tidak di-cache.
-const CACHE = "afu-v5";
+const CACHE = "afu-v6";
 const SHELL = ["./", "index.html", "css/style.css", "js/common.js", "js/app.js", "js/config.js", "assets/logo.png", "assets/mascot-wave.webp"];
 self.addEventListener("install", e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())));
 self.addEventListener("activate", e => e.waitUntil(

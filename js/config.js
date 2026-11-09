@@ -5,4 +5,6 @@ window.AFU_CONFIG = {
   SUPABASE_ANON_KEY: "sb_publishable_fA3Dgl9yDtPxH5ExsVd2tA_aVNCyeOB",
   BUCKET: "documents",
   GOATCOUNTER: "1khsan",
+  // Alamat utama websitemu (tanpa garis miring di akhir). Ganti kalau sudah punya domain sendiri.
+  SITE_URL: "https://afu-digital-library.pages.dev",
 }
