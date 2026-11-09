@@ -1,3 +1,21 @@
+// cadangan: kalau tryout.js gagal dimuat, situs tetap jalan dan hanya fitur Try Out yang dinonaktifkan
+if (typeof AFU !== "undefined" && !AFU.TO) {
+  console.warn("[AFU] tryout.js tidak termuat, Try Out dinonaktifkan sementara. Cek tab Network untuk file /js/tryout.js.");
+  AFU.TO = {
+    render() {
+      const r = document.getElementById("app");
+      if (r) r.innerHTML = '<div class="wrap"><p class="notice warn">Try Out belum bisa dimuat. Muat ulang halaman dengan Ctrl+Shift+R.</p></div>';
+    },
+    leaving: () => true,
+    busy: () => false,
+    repaint() {},
+    count: () => 0,
+    hasDraft: () => false,
+    stats: () => ({ n: 0, avg: 0, best: 0 }),
+    loadList: async () => []
+  };
+}
+
 (() => {
   const { t, esc, sb, SUB, ABBR } = AFU;
   const app = document.getElementById("app");
@@ -114,7 +132,7 @@
   function docCard(d, tag) {
     const loc = AFU.lang === "id" ? "id-ID" : "en-US";
     const date = new Date(d.created_at).toLocaleDateString(loc, { day: "numeric", month: "short", year: "numeric" });
-    const meta = [AFU.fmtSize(d.size_bytes), t("added") + " " + date].filter(Boolean).join(" · ");
+    const meta = [AFU.fmtSize(d.size_bytes), t("added") + " " + date].filter(Boolean).join(" \u00B7 ");
     const url = AFU.url(d.file_path);
     const partner = d.pair_id && cache.byId?.[d.pair_id];
     const on = favs().includes(d.id);
@@ -144,7 +162,7 @@
     let seen = ""; try { seen = sessionStorage.getItem("afu-ban"); } catch (e) {}
     if (!txt || seen === txt) { b.hidden = true; return; }
     b.hidden = false;
-    b.innerHTML = `<div class="wrap banner-in"><span>${esc(txt)}</span><button type="button" id="banX" aria-label="${esc(t("close"))}">×</button></div>`;
+    b.innerHTML = `<div class="wrap banner-in"><span>${esc(txt)}</span><button type="button" id="banX" aria-label="${esc(t("close"))}">\u00D7</button></div>`;
     document.getElementById("banX").onclick = () => { try { sessionStorage.setItem("afu-ban", txt); } catch (e) {} b.hidden = true; };
   }
 
@@ -247,7 +265,7 @@
     const docs = LS.get("afu-recent", []).map(id => cache.byId?.[id]).filter(Boolean);
     if (!docs.length) { box.innerHTML = ""; return; }
     box.innerHTML = `<h2 class="how-t">${esc(t("rc_t"))}</h2><div class="grid2">${docs.slice(0, 2).map(d =>
-      docCard(d, `${t(d.type === "soal" ? "modul_t" : "pemb_t")} · ${ABBR[d.subtest]}`)).join("")}</div>`;
+      docCard(d, `${t(d.type === "soal" ? "modul_t" : "pemb_t")} \u00B7 ${ABBR[d.subtest]}`)).join("")}</div>`;
     stagger();
   }
 
@@ -346,7 +364,7 @@
       const all = await loadAll(), box = document.getElementById("latest");
       if (!box || !all.length) return;
       box.innerHTML = `<h2 class="how-t">${esc(t("latest"))}</h2><div class="grid2">${all.slice(0, 6).map(d =>
-        docCard(d, `${t(d.type === "soal" ? "modul_t" : "pemb_t")} · ${ABBR[d.subtest]}`)).join("")}</div>`;
+        docCard(d, `${t(d.type === "soal" ? "modul_t" : "pemb_t")} \u00B7 ${ABBR[d.subtest]}`)).join("")}</div>`;
       stagger(); fillRecent();
     } catch (e) {}
   }
@@ -360,7 +378,7 @@
       const res = all.filter(d => (d.title + " " + (d.description || "") + " " + (d.category || "")).toLowerCase().includes(v)).slice(0, 12);
       if (!box.isConnected) return;
       box.innerHTML = res.length
-        ? `<div class="grid2 gres-list">${res.map(d => docCard(d, `${t(d.type === "soal" ? "modul_t" : "pemb_t")} · ${ABBR[d.subtest]}`)).join("")}</div>`
+        ? `<div class="grid2 gres-list">${res.map(d => docCard(d, `${t(d.type === "soal" ? "modul_t" : "pemb_t")} \u00B7 ${ABBR[d.subtest]}`)).join("")}</div>`
         : `<p class="notice">${esc(t("no_match"))}</p>`;
       stagger();
     } catch (e) { box.innerHTML = `<p class="notice warn">${esc(t("err"))}</p>`; }
@@ -443,7 +461,7 @@
       <section class="wrap page">
         <a class="back" href="/">${ICON.back}${esc(t("back"))}</a>
         <h1>${esc(t("fav_t"))}</h1><p class="lead sm">${esc(t("fav_note"))}</p>
-        ${list.length ? `<div class="grid2">${list.map(d => docCard(d, `${t(d.type === "soal" ? "modul_t" : "pemb_t")} · ${ABBR[d.subtest]}`)).join("")}</div>`
+        ${list.length ? `<div class="grid2">${list.map(d => docCard(d, `${t(d.type === "soal" ? "modul_t" : "pemb_t")} \u00B7 ${ABBR[d.subtest]}`)).join("")}</div>`
           : `<p class="notice">${esc(t("fav_empty"))}</p>`}
       </section>`;
     stagger();
@@ -534,4 +552,435 @@
       const q = document.getElementById("gq"); if (q) { e.preventDefault(); q.focus(); }
     });
   })();
+})();
+
+// ---------- v8: aurora latar ikut kursor, kartu miring saat kursor di dalamnya, cahaya aurora di dalam kartu, tombol magnetik ----------
+(() => {
+  const fine = matchMedia("(hover:hover) and (pointer:fine)").matches;
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const app = document.getElementById("app");
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  // ===== aurora latar: 4 gumpalan cahaya, diselipkan sebagai latar =====
+  const au = document.createElement("div");
+  au.className = "aurora"; au.setAttribute("aria-hidden", "true");
+  au.innerHTML = "<i></i><i></i><i></i><i></i>";
+  document.body.prepend(au);
+  document.documentElement.classList.add("has-aurora");
+  const blobs = [...au.children], FOLLOW = [.32, .20, .28, .16]; // makin besar = makin jauh ikut kursor
+  let ax = 0, ay = 0, tx = 0, ty = 0, auRun = false;
+  const auLoop = () => {
+    ax += (tx - ax) * .06; ay += (ty - ay) * .06; // gerak halus, ada "ekor"
+    blobs.forEach((b, i) => { b.style.translate = `${(ax * FOLLOW[i]).toFixed(1)}px ${(ay * FOLLOW[i]).toFixed(1)}px`; });
+    if (Math.abs(tx - ax) > .3 || Math.abs(ty - ay) > .3) requestAnimationFrame(auLoop); else auRun = false;
+  };
+
+  // ===== kartu: miring HANYA saat kursor ada di dalam kartu =====
+  // DIR = 1  -> sisi kartu yang dekat kursor "menghadap" kursor. Ubah ke -1 kalau mau kebalikannya.
+  const DIR = 1;
+  // max = sudut miring maksimal (derajat) saat kursor di tepi kartu. Kecilkan angkanya kalau masih terlalu miring.
+  const GROUPS = [
+    { sel: ".card.big,.card.to-card", max: 6 },        // kartu besar beranda + kartu try out
+    { sel: ".card.book", max: 5 },                      // kartu subtes
+    { sel: ".card.doc", max: 3.5 },                     // kartu dokumen (lebar, jadi miringnya lebih kecil)
+    { sel: ".honey", max: 7, minWidth: 821 }            // 7 heksagon = satu kartu, miring bersama
+  ];
+  const ALL = GROUPS.map(g => g.sel).join(","), MAG = ".promo-btn,.soc,.ctrl .icon-btn";
+  const groupOf = el => GROUPS.find(g => el.matches(g.sel));
+  const resetT = el => { el.style.removeProperty("--rx"); el.style.removeProperty("--ry"); };
+  const resetM = el => { el.style.translate = ""; };
+  let px = 0, py = 0, has = false, pRaf = 0, curT = null, curM = null;
+
+  // satu titik kursor -> cari kartu di bawahnya -> miringkan + gerakkan cahaya di dalamnya
+  const point = (x, y, target) => {
+    const el = target && target.closest ? target.closest(ALL) : null;
+    if (curT && curT !== el) resetT(curT); // kursor keluar dari kartu -> kartu kembali lurus
+    curT = el;
+    if (!el) return;
+    const g = groupOf(el);
+    if (g.minWidth && innerWidth < g.minWidth) return resetT(el);
+    const r = el.getBoundingClientRect();
+    const fx = clamp((x - r.left) / r.width, 0, 1), fy = clamp((y - r.top) / r.height, 0, 1); // posisi kursor di dalam kartu, 0..1
+    el.style.setProperty("--ry", (DIR * (fx - .5) * 2 * g.max).toFixed(2) + "deg");
+    el.style.setProperty("--rx", (-DIR * (fy - .5) * 2 * g.max).toFixed(2) + "deg");
+    el.style.setProperty("--mx", (fx * 100).toFixed(1) + "%"); // posisi cahaya aurora di dalam kartu
+    el.style.setProperty("--my", (fy * 100).toFixed(1) + "%");
+  };
+  const sched = target => {
+    if (pRaf) return;
+    pRaf = requestAnimationFrame(() => { pRaf = 0; if (has) point(px, py, target || document.elementFromPoint(px, py)); });
+  };
+
+  if (fine && !reduce) {
+    addEventListener("pointermove", e => {
+      if (e.pointerType !== "mouse") return;
+      px = e.clientX; py = e.clientY; has = true;
+      sched(e.target);
+
+      // aurora latar ikut kursor
+      tx = px - innerWidth / 2; ty = py - innerHeight / 2;
+      if (!auRun) { auRun = true; requestAnimationFrame(auLoop); }
+
+      // tombol magnetik
+      const m = e.target.closest && e.target.closest(MAG);
+      if (curM && curM !== m) resetM(curM);
+      curM = m;
+      if (m) {
+        const r = m.getBoundingClientRect();
+        m.style.translate = `${((px - (r.left + r.width / 2)) * .25).toFixed(1)}px ${((py - (r.top + r.height / 2)) * .25).toFixed(1)}px`;
+      }
+    }, { passive: true });
+    addEventListener("scroll", () => sched(null), { passive: true }); // kartu bergeser saat gulir, hitung ulang
+    document.documentElement.addEventListener("mouseleave", () => {
+      has = false;
+      if (curT) resetT(curT); curT = null;
+      if (curM) resetM(curM); curM = null;
+    });
+  }
+
+  // ===== muncul halus saat digulir + dipasang ulang tiap halaman dirender =====
+  let scan = () => {};
+  if (!reduce && app && "IntersectionObserver" in window) {
+    const io = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) { en.target.classList.add("in"); io.unobserve(en.target); } }), { threshold: .12, rootMargin: "0px 0px -5% 0px" });
+    const SEL = ".promo,.count,.how-t,.steps,.faq,.req,.tbanner,.pomo";
+    scan = () => app.querySelectorAll(SEL).forEach(el => { if (el.dataset.rv) return; el.dataset.rv = "1"; el.classList.add("reveal"); io.observe(el); });
+  }
+  if (app) {
+    let mRaf = 0;
+    new MutationObserver(() => { if (!mRaf) mRaf = requestAnimationFrame(() => { mRaf = 0; scan(); }); }).observe(app, { childList: true, subtree: true });
+    scan();
+  }
+})();
+
+// ---------- v9: palet perintah (Ctrl/Cmd+K), pintasan keyboard, target harian + XP + badge, transisi tema ----------
+(() => {
+  const L = (a, b) => (AFU.lang === "id" ? a : b);
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const store = {
+    get(k, d) { try { const v = JSON.parse(localStorage.getItem(k)); return v ?? d; } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  };
+  const today = () => new Date().toLocaleDateString("sv-SE");
+  const toast = m => { if (window.AFUApp) AFUApp.toast(m); };
+  const typing = el => !!el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
+  const isMac = /Mac|iPhone|iPad/.test(navigator.platform || "");
+  const SUBS = AFU.SUB, ABBR = AFU.ABBR;
+
+  // pindah halaman lewat router bawaan (klik pada link internal)
+  const go = href => {
+    const a = document.createElement("a");
+    a.href = href; a.style.display = "none";
+    document.body.appendChild(a); a.click(); a.remove();
+  };
+
+  /* =============== 1) palet perintah =============== */
+  let box, input, list, items = [], idx = 0, lastFocus = null, docsReady = false;
+
+  const pageItems = () => [
+    { sec: L("Halaman", "Pages"), ic: "\uD83C\uDFE0", t: L("Beranda", "Home"), s: "/", run: () => go("/") },
+    { sec: L("Halaman", "Pages"), ic: "\uD83D\uDCDA", t: AFU.t("nav_modul"), s: "/modul", run: () => go("/modul") },
+    { sec: L("Halaman", "Pages"), ic: "\u2705", t: AFU.t("nav_pemb"), s: "/pembahasan", run: () => go("/pembahasan") },
+    { sec: L("Halaman", "Pages"), ic: "\uD83D\uDCDD", t: AFU.t("nav_to"), s: "/tryout", run: () => go("/tryout") },
+    { sec: L("Halaman", "Pages"), ic: "\uD83D\uDCCA", t: L("Statistik saya", "My stats"), s: "/tryout/statistik", run: () => go("/tryout/statistik") },
+    { sec: L("Halaman", "Pages"), ic: "\u2B50", t: AFU.t("nav_fav"), s: "/favorit", run: () => go("/favorit") },
+    { sec: L("Halaman", "Pages"), ic: "\u2139\uFE0F", t: AFU.t("nav_about"), s: "/tentang", run: () => go("/tentang") }
+  ];
+
+  const actionItems = () => [
+    { sec: L("Aksi", "Actions"), ic: "\uD83C\uDF17", t: L("Ganti tema terang/gelap", "Toggle light/dark theme"), k: "T", run: () => document.getElementById("themeBtn")?.click() },
+    { sec: L("Aksi", "Actions"), ic: "\uD83C\uDF10", t: L("Ganti bahasa ID/EN", "Switch language ID/EN"), k: "L", run: () => document.getElementById("langBtn")?.click() },
+    { sec: L("Aksi", "Actions"), ic: "\u23F1\uFE0F", t: L("Buka Fokus Timer", "Open Focus Timer"), run: () => {
+      go("/");
+      setTimeout(() => document.getElementById("pomo")?.scrollIntoView({ behavior: "smooth", block: "center" }), 450);
+    } },
+    { sec: L("Aksi", "Actions"), ic: "\u2328\uFE0F", t: L("Lihat pintasan keyboard", "Show keyboard shortcuts"), k: "?", run: () => setTimeout(openHelp, 60) },
+    { sec: L("Aksi", "Actions"), ic: "\uD83D\uDD17", t: L("Salin link halaman ini", "Copy this page link"), run: () => { if (window.AFUApp) AFUApp.copy(location.href); } }
+  ];
+
+  const subItems = () => {
+    const out = [];
+    SUBS.forEach(k => {
+      out.push({ sec: L("Subtes: Modul Soal", "Subtests: Question modules"), ic: "\uD83D\uDCD8", t: ABBR[k] + " \u00B7 " + AFU.t("s_" + k), s: "/modul/" + k, run: () => go("/modul/" + k) });
+    });
+    SUBS.forEach(k => {
+      out.push({ sec: L("Subtes: Pembahasan", "Subtests: Solutions"), ic: "\uD83D\uDCD7", t: ABBR[k] + " \u00B7 " + AFU.t("s_" + k), s: "/pembahasan/" + k, run: () => go("/pembahasan/" + k) });
+    });
+    return out;
+  };
+
+  const docItems = () => ((window.AFUApp && AFUApp.docs) || []).map(d => ({
+    sec: L("Dokumen", "Documents"),
+    ic: d.type === "soal" ? "\uD83D\uDCC4" : "\uD83D\uDCA1",
+    t: d.title,
+    s: (d.type === "soal" ? AFU.t("modul_t") : AFU.t("pemb_t")) + " \u00B7 " + (ABBR[d.subtest] || d.subtest) + (d.category ? " \u00B7 " + d.category : ""),
+    run: () => go((d.type === "soal" ? "/modul/" : "/pembahasan/") + d.subtest)
+  }));
+
+  // skor pencarian: semua kata harus ada; awal kata dihargai lebih tinggi
+  const score = (q, text) => {
+    const s = text.toLowerCase(), words = q.toLowerCase().split(/\s+/).filter(Boolean);
+    let sc = 0;
+    for (const w of words) {
+      const i = s.indexOf(w);
+      if (i < 0) return -1;
+      sc += i === 0 ? 3 : /[\s\u00B7\-/]/.test(s[i - 1]) ? 2 : 1;
+    }
+    return sc;
+  };
+
+  function compute(q) {
+    const all = [...pageItems(), ...actionItems(), ...subItems(), ...docItems()];
+    if (!q.trim()) return all.filter(x => x.sec !== L("Dokumen", "Documents")).slice(0, 14);
+    return all
+      .map(x => ({ x, sc: score(q, x.t + " " + (x.s || "") + " " + x.sec) }))
+      .filter(r => r.sc >= 0)
+      .sort((a, b) => b.sc - a.sc)
+      .slice(0, 40)
+      .map(r => r.x);
+  }
+
+  function paintList() {
+    if (!items.length) { list.innerHTML = `<li class="cp-empty">${esc(L("Tidak ada yang cocok.", "Nothing matches."))}</li>`; input.removeAttribute("aria-activedescendant"); return; }
+    let html = "", last = "";
+    items.forEach((x, i) => {
+      if (x.sec !== last) { html += `<li class="cp-sec" role="presentation">${esc(x.sec)}</li>`; last = x.sec; }
+      html += `<li class="cp-it${i === idx ? " on" : ""}" role="option" id="cp-i-${i}" data-i="${i}" aria-selected="${i === idx}">
+        <span class="cp-ic" aria-hidden="true">${x.ic}</span>
+        <span class="cp-t">${esc(x.t)}${x.s ? `<span class="cp-s">${esc(x.s)}</span>` : ""}</span>
+        ${x.k ? `<span class="cp-k">${esc(x.k)}</span>` : ""}</li>`;
+    });
+    list.innerHTML = html;
+    input.setAttribute("aria-activedescendant", "cp-i-" + idx);
+    list.querySelector(".cp-it.on")?.scrollIntoView({ block: "nearest" });
+  }
+
+  function refresh() { items = compute(input.value); idx = 0; paintList(); }
+  function choose(i) { const x = items[i]; if (!x) return; closePalette(false); x.run(); }
+
+  function buildPalette() {
+    box = document.createElement("div");
+    box.className = "cp"; box.setAttribute("role", "dialog"); box.setAttribute("aria-modal", "true");
+    box.innerHTML = `<div class="cp-box">
+      <div class="cp-in"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input id="cpIn" type="text" role="combobox" aria-expanded="true" aria-controls="cpList" autocomplete="off" spellcheck="false"></div>
+      <ul class="cp-list" id="cpList" role="listbox"></ul>
+      <div class="cp-foot"><span><kbd>\u2191</kbd> <kbd>\u2193</kbd> <span data-l="nav"></span></span><span><kbd>Enter</kbd> <span data-l="open"></span></span><span><kbd>Esc</kbd> <span data-l="close"></span></span></div></div>`;
+    document.body.appendChild(box);
+    input = box.querySelector("#cpIn"); list = box.querySelector("#cpList");
+    box.addEventListener("mousedown", e => { if (e.target === box) closePalette(true); });
+    list.addEventListener("mousemove", e => {
+      const li = e.target.closest(".cp-it"); if (!li) return;
+      const i = +li.dataset.i; if (i !== idx) { idx = i; paintList(); }
+    });
+    list.addEventListener("click", e => { const li = e.target.closest(".cp-it"); if (li) choose(+li.dataset.i); });
+    input.addEventListener("input", refresh);
+    input.addEventListener("keydown", e => {
+      if (e.key === "ArrowDown") { e.preventDefault(); idx = (idx + 1) % Math.max(items.length, 1); paintList(); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); idx = (idx - 1 + items.length) % Math.max(items.length, 1); paintList(); }
+      else if (e.key === "Enter") { e.preventDefault(); choose(idx); }
+      else if (e.key === "Escape") { e.preventDefault(); closePalette(true); }
+      else if (e.key === "Tab") { e.preventDefault(); }
+    });
+  }
+
+  function openPalette() {
+    if (!box) buildPalette();
+    lastFocus = document.activeElement;
+    input.placeholder = L("Cari halaman, subtes, atau dokumen...", "Search pages, subtests, or documents...");
+    box.querySelector("[data-l=nav]").textContent = L("pilih", "navigate");
+    box.querySelector("[data-l=open]").textContent = L("buka", "open");
+    box.querySelector("[data-l=close]").textContent = L("tutup", "close");
+    input.value = ""; refresh();
+    box.classList.add("on"); document.documentElement.style.overflow = "hidden";
+    setTimeout(() => input.focus(), 30);
+    if (!docsReady && window.AFUApp) {
+      docsReady = true;
+      Promise.resolve(AFUApp.loadAll()).then(() => { if (box.classList.contains("on")) refresh(); }).catch(() => { docsReady = false; });
+    }
+  }
+  function closePalette(restore) {
+    if (!box) return;
+    box.classList.remove("on"); document.documentElement.style.overflow = "";
+    if (restore && lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+  const paletteOpen = () => !!box && box.classList.contains("on");
+
+  /* =============== 2) tombol palet di header =============== */
+  function mountButton() {
+    const ctrl = document.querySelector(".ctrl");
+    if (!ctrl || document.getElementById("cpBtn")) return;
+    const b = document.createElement("button");
+    b.id = "cpBtn"; b.type = "button"; b.className = "cp-btn";
+    b.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><span id="cpBtnT"></span><kbd>${isMac ? "\u2318K" : "Ctrl K"}</kbd>`;
+    b.addEventListener("click", openPalette);
+    ctrl.insertBefore(b, ctrl.firstChild);
+    labelButton();
+  }
+  function labelButton() {
+    const s = document.getElementById("cpBtnT"), b = document.getElementById("cpBtn");
+    if (s) s.textContent = L("Cari", "Search");
+    if (b) b.setAttribute("aria-label", L("Buka pencarian cepat", "Open quick search"));
+  }
+
+  /* =============== 3) pintasan keyboard =============== */
+  let help;
+  function buildHelp() {
+    help = document.createElement("div");
+    help.className = "kb"; help.setAttribute("role", "dialog"); help.setAttribute("aria-modal", "true");
+    help.addEventListener("mousedown", e => { if (e.target === help) closeHelp(); });
+    document.body.appendChild(help);
+  }
+  function openHelp() {
+    if (!help) buildHelp();
+    const rows = [
+      [isMac ? "\u2318 K" : "Ctrl K", L("Pencarian cepat", "Quick search")],
+      ["/", L("Fokus ke kotak cari beranda", "Focus the home search box")],
+      ["H", L("Ke beranda", "Go home")],
+      ["M", AFU.t("modul_t")],
+      ["F", AFU.t("fav_t")],
+      ["T", L("Ganti tema", "Toggle theme")],
+      ["L", L("Ganti bahasa", "Switch language")],
+      ["?", L("Tampilkan daftar ini", "Show this list")]
+    ];
+    help.innerHTML = `<div class="kb-box"><h2>${esc(L("Pintasan keyboard", "Keyboard shortcuts"))}</h2>
+      ${rows.map(r => `<div class="kb-row"><span>${esc(r[1])}</span><kbd>${esc(r[0])}</kbd></div>`).join("")}
+      <button type="button" class="btn ghost kb-x">${esc(AFU.t("close"))}</button></div>`;
+    help.querySelector(".kb-x").addEventListener("click", closeHelp);
+    help.classList.add("on");
+    help.querySelector(".kb-x").focus();
+  }
+  function closeHelp() { if (help) help.classList.remove("on"); }
+
+  document.addEventListener("keydown", e => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+      e.preventDefault();
+      paletteOpen() ? closePalette(true) : openPalette();
+      return;
+    }
+    if (e.key === "Escape") { if (help && help.classList.contains("on")) closeHelp(); return; }
+    if (e.ctrlKey || e.metaKey || e.altKey || typing(e.target) || paletteOpen()) return;
+    const k = e.key.toLowerCase();
+    if (e.key === "?") { e.preventDefault(); openHelp(); }
+    else if (k === "t") document.getElementById("themeBtn")?.click();
+    else if (k === "l") document.getElementById("langBtn")?.click();
+    else if (k === "h") go("/");
+    else if (k === "m") go("/modul");
+    else if (k === "f") go("/favorit");
+  });
+
+  /* =============== 4) transisi tema yang mulus =============== */
+  document.addEventListener("click", e => {
+    if (!e.target.closest("#themeBtn")) return;
+    const h = document.documentElement;
+    h.classList.add("theme-fade");
+    clearTimeout(h._tf); h._tf = setTimeout(() => h.classList.remove("theme-fade"), 450);
+  }, true);
+
+  /* =============== 5) target harian, XP, level, dan badge =============== */
+  const DK = "afu-daily", XK = "afu-xp";
+  const daily = () => {
+    const v = store.get(DK, {});
+    return v.d === today() ? v : { d: today(), ids: [], goal: v.goal || 3, done: false };
+  };
+  const xpData = () => Object.assign({ total: 0, opens: 0, goals: 0, pomo: { d: "", n: 0 }, pomoAll: 0 }, store.get(XK, {}));
+  const level = xp => Math.floor(xp / 100) + 1;
+
+  const BADGES = [
+    { ic: "\uD83D\uDCD6", n: ["Pembuka Buku", "First Page"], ok: (x) => x.opens >= 1 },
+    { ic: "\uD83D\uDCDA", n: ["Kutu Buku (25 dokumen)", "Bookworm (25 docs)"], ok: (x) => x.opens >= 25 },
+    { ic: "\uD83C\uDF45", n: ["Fokus Pemula", "Focus Rookie"], ok: (x) => x.pomoAll >= 1 },
+    { ic: "\uD83D\uDD25", n: ["Streak 3 hari", "3-day streak"], ok: (x, s) => s >= 3 },
+    { ic: "\u26A1", n: ["Streak 7 hari", "7-day streak"], ok: (x, s) => s >= 7 },
+    { ic: "\uD83D\uDC51", n: ["Streak 30 hari", "30-day streak"], ok: (x, s) => s >= 30 },
+    { ic: "\uD83C\uDFAF", n: ["Target tercapai", "Goal reached"], ok: (x) => x.goals >= 1 },
+    { ic: "\uD83C\uDFC6", n: ["Konsisten (7 target)", "Consistent (7 goals)"], ok: (x) => x.goals >= 7 },
+    { ic: "\uD83D\uDE80", n: ["Level 5", "Level 5"], ok: (x) => level(x.total) >= 5 }
+  ];
+
+  function award(points, why) {
+    const x = xpData(), before = level(x.total);
+    x.total += points; store.set(XK, x);
+    if (level(x.total) > before) toast(L("Naik ke level ", "Level up! Now level ") + level(x.total) + " \uD83C\uDF89");
+    else if (why) toast("+" + points + " XP \u00B7 " + why);
+  }
+
+  // dokumen yang dibuka hari ini dihitung sekali per dokumen
+  document.addEventListener("click", e => {
+    const o = e.target.closest("[data-open]"); if (!o) return;
+    const d = daily(), id = o.dataset.open;
+    if (d.ids.includes(id)) return;
+    d.ids.push(id);
+    const x = xpData(); x.opens += 1; store.set(XK, x);
+    let bonus = false;
+    if (!d.done && d.ids.length >= d.goal) {
+      d.done = true; bonus = true;
+      const y = xpData(); y.goals += 1; store.set(XK, y);
+    }
+    store.set(DK, d);
+    award(10, L("buka dokumen", "opened a document"));
+    if (bonus) setTimeout(() => { award(20); toast(L("Target harian tercapai! +20 XP \uD83C\uDFAF", "Daily goal reached! +20 XP \uD83C\uDFAF")); }, 1900);
+    paintGoal();
+  });
+
+  // sesi Pomodoro diambil dari data Fokus Timer yang sudah ada
+  setInterval(() => {
+    const p = store.get("afu-pomo", null); if (!p || p.d !== today()) return;
+    const x = xpData(), prev = x.pomo.d === p.d ? x.pomo.n : 0;
+    if (p.n > prev) {
+      const add = p.n - prev;
+      x.pomo = { d: p.d, n: p.n }; x.pomoAll += add; store.set(XK, x);
+      award(25 * add, L("sesi fokus selesai", "focus session done"));
+      paintGoal();
+    }
+  }, 4000);
+
+  const streakN = () => (store.get("afu-streak", {}).n || 0);
+
+  function goalHTML() {
+    const d = daily(), x = xpData(), s = streakN();
+    const n = Math.min(d.ids.length, d.goal), pct = Math.round((n / d.goal) * 100);
+    const lv = level(x.total), cur = x.total % 100;
+    const done = d.ids.length >= d.goal;
+    return `<div class="goal-ring${done ? " done" : ""}" style="--p:${pct}" role="img" aria-label="${n}/${d.goal}"><b>${n}/${d.goal}</b></div>
+      <div><h2 id="goalT">${esc(done ? L("Target hari ini tercapai! \uD83C\uDF89", "Today's goal reached! \uD83C\uDF89") : L("Target belajar hari ini", "Today's study goal"))}</h2>
+        <p>${esc(L("Buka " + d.goal + " dokumen hari ini untuk mengumpulkan XP.", "Open " + d.goal + " documents today to earn XP."))}</p>
+        <div class="goal-ctl"><button type="button" data-g="-1" aria-label="${esc(L("Kurangi target", "Decrease goal"))}">\u2212</button>
+          <span>${esc(L(d.goal + " dokumen", d.goal + " docs"))}</span>
+          <button type="button" data-g="1" aria-label="${esc(L("Tambah target", "Increase goal"))}">+</button></div></div>
+      <div class="xp"><span class="xp-lv">Lv ${lv}</span><div class="xp-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${cur}"><i style="width:${cur}%"></i></div><span class="xp-n">${x.total} XP</span></div>
+      <div class="badges">${BADGES.map(b => `<span class="bdg${b.ok(x, s) ? " on" : ""}">${b.ic} ${esc(AFU.lang === "id" ? b.n[0] : b.n[1])}</span>`).join("")}</div>`;
+  }
+
+  function paintGoal() {
+    const g = document.getElementById("goal"); if (!g) return;
+    g.innerHTML = goalHTML();
+    // animasi isi bar XP dan cincin saat pertama muncul
+    const bar = g.querySelector(".xp-bar i"); if (bar) { const w = bar.style.width; bar.style.width = "0"; requestAnimationFrame(() => requestAnimationFrame(() => { bar.style.width = w; })); }
+  }
+
+  document.addEventListener("click", e => {
+    const b = e.target.closest("#goal [data-g]"); if (!b) return;
+    const d = daily(); d.goal = Math.max(1, Math.min(10, d.goal + (+b.dataset.g)));
+    if (d.ids.length >= d.goal && !d.done) d.done = true;
+    store.set(DK, d); paintGoal();
+  });
+
+  function mountGoal() {
+    const rec = document.getElementById("recent");
+    if (!rec || document.getElementById("goal")) return;
+    const g = document.createElement("section");
+    g.id = "goal"; g.className = "goal"; g.setAttribute("aria-labelledby", "goalT");
+    rec.parentNode.insertBefore(g, rec);
+    paintGoal();
+  }
+
+  /* =============== 6) pasang semuanya + ikuti perubahan halaman/bahasa =============== */
+  let pending = 0;
+  const sync = () => { pending = 0; mountButton(); mountGoal(); };
+  const schedule = () => { if (!pending) pending = requestAnimationFrame(sync); };
+  const app = document.getElementById("app");
+  if (app) new MutationObserver(schedule).observe(app, { childList: true });
+  new MutationObserver(() => { labelButton(); paintGoal(); if (paletteOpen()) refresh(); })
+    .observe(document.documentElement, { attributes: true, attributeFilter: ["lang"] });
+  sync();
 })();
