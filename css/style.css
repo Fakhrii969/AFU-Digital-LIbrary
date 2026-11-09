@@ -1263,11 +1263,15 @@ html{accent-color:var(--accent); scrollbar-width:thin; scrollbar-color:var(--lin
 .skip:focus{top:1rem}
 
 /* ---------- 10) hover tambahan: garis bawah link, kilau tombol, chip terangkat ---------- */
-.prose a, .faq a, .ftr a{
-  background:linear-gradient(currentColor, currentColor) 0 100% / 0 2px no-repeat;
+/* garis bawah hanya untuk link teks (pakai longhand supaya tidak menimpa warna latar elemen lain) */
+.prose a, .faq p a{
+  background-image:linear-gradient(currentColor, currentColor);
+  background-position:0 100%;
+  background-size:0 2px;
+  background-repeat:no-repeat;
   transition:background-size .3s ease;
 }
-.prose a:hover, .faq a:hover, .ftr a:hover{background-size:100% 2px}
+.prose a:hover, .faq p a:hover{background-size:100% 2px}
 .btn:not(.ghost){position:relative; overflow:hidden}
 .btn:not(.ghost)::after{
   content:"";
@@ -1327,4 +1331,44 @@ html.theme-fade *, html.theme-fade *::before, html.theme-fade *::after{
   body{background:#fff !important; color:#000 !important}
   .card, .goal, .pomo{box-shadow:none !important; border:1px solid #999 !important; break-inside:avoid}
   a{color:#000 !important; text-decoration:underline}
+}
+
+/* ---------- 14) logo footer: kotak putih supaya logo biru tidak tenggelam di latar biru ---------- */
+.ftr .ftr-logo{
+  display:inline-block;
+  background:#fff;
+  border:1px solid rgba(255,255,255,.7);
+  border-radius:18px;
+  padding:.35rem 1.1rem;
+  line-height:0;
+  box-shadow:0 10px 26px -8px rgba(0,0,0,.45), 0 0 0 4px rgba(255,255,255,.12);
+  transition:transform .25s cubic-bezier(.2,1.4,.4,1), box-shadow .25s;
+}
+.ftr .ftr-logo:hover{
+  transform:translateY(-2px) scale(1.02);
+  box-shadow:0 16px 32px -8px rgba(0,0,0,.5), 0 0 0 5px rgba(255,255,255,.2);
+}
+
+/* ---------- 15) aurora di dalam kartu: 5 warna berbeda dan tersebar (cyan, ungu, pink, oranye, mint) ---------- */
+:root{
+  --cl1:rgba(0,190,255,.50);
+  --cl2:rgba(150,90,255,.46);
+  --cl3:rgba(255,90,170,.42);
+  --cl4:rgba(255,170,50,.44);
+  --cl5:rgba(40,215,160,.40);
+}
+[data-theme=dark]{
+  --cl1:rgba(34,200,255,.36);
+  --cl2:rgba(150,100,255,.42);
+  --cl3:rgba(255,100,180,.32);
+  --cl4:rgba(255,160,60,.30);
+  --cl5:rgba(50,220,170,.28);
+}
+.card.big::before,.card.book::before,.card.doc::before,.card.to-card::before{
+  background:
+    radial-gradient(260px circle at var(--mx) var(--my), var(--cl1), transparent 70%),
+    radial-gradient(300px circle at calc(var(--mx) - 28%) calc(var(--my) + 22%), var(--cl2), transparent 70%),
+    radial-gradient(280px circle at calc(var(--mx) + 30%) calc(var(--my) - 20%), var(--cl3), transparent 70%),
+    radial-gradient(260px circle at calc(var(--mx) + 22%) calc(var(--my) + 30%), var(--cl4), transparent 70%),
+    radial-gradient(240px circle at calc(var(--mx) - 24%) calc(var(--my) - 28%), var(--cl5), transparent 70%);
 }
