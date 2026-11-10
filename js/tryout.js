@@ -50,7 +50,7 @@
     st_hist: "Riwayat pengerjaan", st_first: "Pertama", st_redo: "Ulang", st_view: "Bahas",
     st_empty: "Belum ada data. Selesaikan satu try out untuk melihat statistikmu.", st_empty_btn: "Lihat daftar try out",
     st_reset: "Hapus riwayat di perangkat ini", st_reset_q: "Hapus semua riwayat try out di perangkat ini? Data peringkat di server tidak ikut terhapus.",
-    st_peer: "vs rata-rata peserta", st_local: "Riwayat disimpan di browser ini."
+    st_peer: "vs rata-rata peserta", st_local: "Riwayat tersimpan di akunmu dan ikut ke perangkat lain saat kamu masuk. Kalau belum masuk, riwayat hanya ada di browser ini."
   });
   AFU.extend("en", {
     to_title: "UTBK Mock Tests", to_sub: "Take timed simulations, get system-graded scores, and track your progress.",
@@ -98,8 +98,11 @@
     st_hist: "Attempt history", st_first: "First", st_redo: "Retry", st_view: "Review",
     st_empty: "No data yet. Finish one mock test to see your statistics.", st_empty_btn: "See mock tests",
     st_reset: "Clear history on this device", st_reset_q: "Clear all mock test history on this device? Server rankings are not deleted.",
-    st_peer: "vs participant average", st_local: "History is stored in this browser."
+    st_peer: "vs participant average", st_local: "History is saved to your account and follows you when you log in. If you are not logged in, it stays in this browser only."
   });
+
+  AFU.extend("id", { to_need_login: "Masuk dulu untuk mengerjakan try out. Skor, peringkat, dan riwayatmu tersimpan di akunmu.", to_login_go: "Masuk atau daftar untuk mulai", to_login_btn: "Masuk" });
+  AFU.extend("en", { to_need_login: "Log in to take a mock test. Your score, rank and history are saved to your account.", to_login_go: "Log in or sign up to start", to_login_btn: "Log in" });
 
   // ---------- util ----------
   const LS = {
@@ -109,11 +112,6 @@
   };
   const $ = id => document.getElementById(id);
   const A = () => window.AFUApp;
-  const did = () => {
-    let d = LS.get("afu-did");
-    if (!d) { d = (window.crypto?.randomUUID ? crypto.randomUUID() : "d" + Date.now() + Math.random().toString(36).slice(2)); LS.set("afu-did", d); }
-    return d;
-  };
   const hist = () => LS.get("afu-hist", []);
   const firsts = () => hist().filter(h => h.first);
   const firstOf = tid => firsts().find(h => h.tid === tid);
@@ -182,7 +180,7 @@
     return { to, qs };
   }
   async function loadStats(tid) {
-    const { data, error } = await sb.rpc("tryout_stats", { p_tryout: tid, p_device: did() });
+    const { data, error } = await sb.rpc("tryout_stats", { p_tryout: tid });
     if (error) throw error;
     return data;
   }
@@ -233,6 +231,8 @@
     try { data = await loadTo(tid); } catch (e) { $("toBody") && ($("toBody").innerHTML = notice(dbErr(e))); return; }
     const box = $("toBody"); if (!box) return;
     if (!data) { box.innerHTML = notice(t("to_load_err")); return; }
+    await AFU.auth.ready;
+    const authed = !!AFU.auth.user;
     const { to, qs } = data;
     const subs = {}; qs.forEach(q => (subs[q.subtest] = (subs[q.subtest] || 0) + 1));
     const draft = LS.get(draftKey(tid)), f = firstOf(tid);
@@ -248,12 +248,13 @@
         <h3 class="to-h3">${esc(t("to_rules_t"))}</h3>
         <ul class="to-rules"><li>${esc(t("to_rule1"))}</li><li>${esc(t("to_rule2"))}</li><li>${esc(t("to_rule3"))}</li></ul>
         ${qs.length ? `
-          ${draft ? "" : `<label class="to-nick">${esc(t("to_nick"))}<input id="nick" maxlength="24" placeholder="${esc(t("to_nick_ph"))}" value="${esc(nick)}" autocomplete="nickname"></label>`}
-          <button class="btn promo-btn to-go" id="goBtn" type="button">${draft ? ICO.redo : ICO.play}${esc(draft ? t("to_resume") : t("to_start"))}</button>`
+          ${!authed ? `<p class="notice">${esc(t("to_need_login"))}</p>` : draft ? "" : `<label class="to-nick">${esc(t("to_nick"))}<input id="nick" maxlength="24" placeholder="${esc(t("to_nick_ph"))}" value="${esc(nick)}" autocomplete="nickname"></label>`}
+          <button class="btn promo-btn to-go" id="goBtn" type="button">${authed ? (draft ? ICO.redo : ICO.play) : ""}${esc(!authed ? t("to_login_go") : draft ? t("to_resume") : t("to_start"))}</button>`
           : notice(t("to_no_q"), "")}
       </div>
       <div id="board"></div>`;
     $("goBtn")?.addEventListener("click", () => {
+      if (!AFU.auth.user) return AFU.auth.open({ reason: t("to_need_login") });
       if (!draft) LS.set("afu-nick", ($("nick")?.value || "").trim().slice(0, 24));
       startExam(data, draft);
     });
@@ -427,12 +428,14 @@
     document.getElementById("toDlg")?.remove();
     const secs = Math.min(Math.round((Date.now() - X.startedAt) / 1000), X.to.duration_min * 60);
     const d = dialog(`<div class="spin"></div><p class="dlg-c">${esc(t("to_sending"))}</p>`);
-    const { data, error } = await sb.rpc("submit_tryout", { p_tryout: X.tid, p_device: did(), p_nick: X.nick || null, p_answers: X.ans, p_secs: secs });
+    const { data, error } = await sb.rpc("submit_tryout", { p_tryout: X.tid, p_nick: X.nick || null, p_answers: X.ans, p_secs: secs });
     d.remove();
     if (error || !data) {
       X.sending = false;
-      const d2 = dialog(`<h3>${esc(t("to_send_err"))}</h3><div class="btns"><button class="btn" type="button" id="dRetry">${esc(t("to_retry"))}</button></div>`);
+      const needLogin = /harus login/i.test(String(error?.message || ""));
+      const d2 = dialog(`<h3>${esc(needLogin ? t("to_need_login") : t("to_send_err"))}</h3><div class="btns">${needLogin ? `<button class="btn ghost" type="button" id="dLogin">${esc(t("to_login_btn"))}</button>` : ""}<button class="btn" type="button" id="dRetry">${esc(t("to_retry"))}</button></div>`);
       $("dRetry").onclick = () => { d2.remove(); submit(); };
+      if (needLogin) $("dLogin").onclick = () => AFU.auth.open({ reason: t("to_need_login") });
       return;
     }
     const entry = { tid: X.tid, title: X.to.title, ts: Date.now(), first: !!data.first, score: data.score, c: data.correct, n: data.total,
@@ -536,10 +539,11 @@
   // bahas ulang dari riwayat: nilai ulang jawaban tersimpan (tidak mengubah skor pertama di server)
   async function reviewHistory(i) {
     const h = hist()[i]; if (!h?.ans) return;
+    if (!AFU.auth.user) return AFU.auth.open({ reason: t("to_need_login") });
     root().innerHTML = `<section class="wrap page"><a class="back" href="/tryout/statistik">${ICO.back}${esc(t("to_tab_stats"))}</a>${skeleton(1)}</section>`;
     try {
       const data = await loadTo(h.tid); if (!data) throw new Error("x");
-      const { data: res, error } = await sb.rpc("submit_tryout", { p_tryout: h.tid, p_device: did(), p_nick: null, p_answers: h.ans, p_secs: h.secs || 0 });
+      const { data: res, error } = await sb.rpc("submit_tryout", { p_tryout: h.tid, p_nick: null, p_answers: h.ans, p_secs: h.secs || 0 });
       if (error) throw error;
       resultPage({ to: data.to, qs: data.qs, ans: h.ans, res, entry: h, secs: h.secs }, false);
     } catch (e) { root().innerHTML = `<section class="wrap page"><a class="back" href="/tryout/statistik">${ICO.back}${esc(t("to_tab_stats"))}</a>${notice(dbErr(e))}</section>`; }
@@ -636,8 +640,10 @@
   function bindHist() { document.querySelectorAll("[data-rv]").forEach(b => b.addEventListener("click", () => reviewHistory(+b.dataset.rv))); }
 
   // ---------- router ----------
+  let curSub = null, rendered = false;
   AFU.TO = {
     render(sub) {
+      curSub = sub; rendered = true;
       document.body.classList.remove("in-exam");
       if (!AFU.configured) return (root().innerHTML = `<div class="wrap"><p class="notice warn">${esc(t("nocfg"))}</p></div>`);
       if (sub === "statistik") return statsPage();
@@ -658,4 +664,5 @@
     stats: () => { const f = firsts(); return { n: f.length, avg: f.length ? Math.round(f.reduce((s, h) => s + h.score, 0) / f.length) : 0, best: f.length ? Math.max(...f.map(h => h.score)) : 0 }; },
     loadList
   };
+  AFU.auth.onChange(() => { if (rendered && !AFU.TO.busy()) AFU.TO.render(curSub); });
 })();

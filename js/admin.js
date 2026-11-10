@@ -11,8 +11,11 @@
 
   async function show() {
     const { data: { session } } = await sb.auth.getSession();
-    $("login").hidden = !!session; $("panel").hidden = !session;
-    if (session) { $("who").textContent = session.user.email; list(); loadSettings(); tryouts(); }
+    let isAdm = false;
+    if (session) { const r = await sb.rpc("is_admin"); isAdm = !!r.data; }
+    $("login").hidden = isAdm; $("panel").hidden = !isAdm;
+    if (session && !isAdm) say($("loginMsg"), "Akun " + session.user.email + " bukan admin. Masuk dengan akun admin.", false);
+    if (isAdm) { $("who").textContent = session.user.email; list(); loadSettings(); tryouts(); }
   }
   $("loginForm").addEventListener("submit", async e => {
     e.preventDefault();
@@ -268,7 +271,7 @@
     impSay("Gambar diunggah dan barisnya disisipkan.", true);
   });
   async function qList() {
-    const { data, error } = await sb.from("tryout_questions").select("id,subtest,position,body,answer").eq("tryout_id", impTo).order("position").limit(1000);
+    const { data, error } = await sb.rpc("admin_questions", { p_tryout: impTo });
     if (error) return ($("qRows").innerHTML = `<p class="notice warn">${esc(error.message)}</p>`);
     $("qRows").innerHTML = data.length ? data.map(d => `<div class="row"><div><strong>${esc(d.subtest.toUpperCase())}</strong> <span class="muted">${esc(d.body.slice(0, 90))} · kunci ${"ABCDE"[d.answer]}</span></div>
       <button class="btn ghost sm danger" data-qdel="${d.id}" type="button">Hapus</button></div>`).join("") : '<p class="muted">Belum ada soal.</p>';

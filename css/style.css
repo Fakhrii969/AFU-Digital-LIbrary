@@ -1100,3 +1100,21 @@ html.theme-fade *, html.theme-fade *::before, html.theme-fade *::after{
 .fq-opts label input{margin:0}
 .fq-prev{display:flex;align-items:center;gap:.8rem;margin:.2rem 0 1rem}
 .fq-prev img{max-width:160px;max-height:110px;border-radius:12px;border:1px solid var(--line)}
+
+/* ---- Tahap 2-3: akun pengguna ---- */
+.acc-btn{position:relative}
+.acc-btn .acc-av{display:grid;place-items:center;width:1.7rem;height:1.7rem;border-radius:50%;background:var(--accent);color:#fff;font-weight:800;font-size:.85rem;line-height:1}
+.acc-btn.on{box-shadow:0 0 0 2px var(--accent) inset}
+.dlg-card.acc{max-height:92vh;overflow:auto}
+.acc label{display:block;font-weight:600;font-size:.9rem;margin-bottom:.8rem}
+.acc input:not([type=checkbox]){display:block;width:100%;margin-top:.3rem;padding:.65rem .8rem;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--text);font:inherit}
+.acc input:not([type=checkbox]):focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 4px var(--glow)}
+.acc .dlg-chk{font-weight:500;font-size:.85rem}
+.acc .dlg-chk a{color:var(--accent);text-decoration:underline}
+.acc-tabs{display:flex;gap:.4rem;margin:.6rem 0 1rem;padding:.25rem;border-radius:999px;background:var(--chip)}
+.acc-tabs button{flex:1;padding:.5rem .8rem;border:0;border-radius:999px;background:transparent;color:var(--muted);font:inherit;font-weight:700;cursor:pointer}
+.acc-tabs button[aria-pressed=true]{background:var(--surface);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.18)}
+.acc-mail{font-weight:700;word-break:break-all;color:var(--text)!important}
+.acc-note{font-size:.82rem;margin:.2rem 0 1rem!important}
+.acc-foot{margin:1rem 0 0!important;text-align:center;font-size:.88rem}
+.acc .notice{margin:.4rem 0 .9rem}
