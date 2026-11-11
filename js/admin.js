@@ -12,11 +12,54 @@
   async function show() {
     const { data: { session } } = await sb.auth.getSession();
     let isAdm = false;
-    if (session) { const r = await sb.rpc("is_admin"); isAdm = !!r.data; }
+    $("mfaBox").hidden = true;
+    if (session) {
+      // akun dengan MFA aktif wajib memasukkan kode 6 digit dulu sebelum dianggap admin
+      const { data: aal } = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (aal && aal.nextLevel === "aal2" && aal.currentLevel !== "aal2") {
+        $("login").hidden = true; $("panel").hidden = true; $("mfaBox").hidden = false; $("mfaCode").focus(); return;
+      }
+      const r = await sb.rpc("is_admin"); isAdm = !!r.data;
+    }
     $("login").hidden = isAdm; $("panel").hidden = !isAdm;
     if (session && !isAdm) say($("loginMsg"), "Akun " + session.user.email + " bukan admin. Masuk dengan akun admin.", false);
-    if (isAdm) { $("who").textContent = session.user.email; list(); loadSettings(); tryouts(); }
+    if (isAdm) { $("who").textContent = session.user.email; list(); loadSettings(); tryouts(); mfaState(); }
   }
+
+  // ---- MFA (TOTP) ----
+  $("mfaForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    const { data: f } = await sb.auth.mfa.listFactors();
+    const fac = ((f && f.totp) || [])[0];
+    if (!fac) return say($("mfaMsg"), "Faktor MFA tidak ditemukan. Keluar lalu masuk lagi.", false);
+    const { error } = await sb.auth.mfa.challengeAndVerify({ factorId: fac.id, code: $("mfaCode").value.trim() });
+    if (error) return say($("mfaMsg"), "Kode salah atau kedaluwarsa. Coba kode terbaru.", false);
+    $("mfaCode").value = ""; say($("mfaMsg"), "", true); show();
+  });
+  $("mfaOut").addEventListener("click", async () => { await sb.auth.signOut(); show(); });
+  async function mfaState() {
+    const { data: f } = await sb.auth.mfa.listFactors();
+    const on = ((f && f.totp) || []).length > 0;
+    $("mfaState").textContent = on ? "MFA aktif. Setiap login admin meminta kode 6 digit." : "MFA belum aktif. Aktifkan sekarang agar akun admin lebih aman.";
+    $("mfaStart").hidden = on; $("mfaEnroll").hidden = true;
+  }
+  let enrollId = null;
+  $("mfaStart").addEventListener("click", async () => {
+    say($("mfaSetupMsg"), "", true);
+    const { data: f } = await sb.auth.mfa.listFactors();
+    for (const x of ((f && f.all) || [])) if (x.status !== "verified") await sb.auth.mfa.unenroll({ factorId: x.id }); // buang pendaftaran yang tidak selesai
+    const { data, error } = await sb.auth.mfa.enroll({ factorType: "totp", friendlyName: "AFU admin " + Date.now() });
+    if (error) return say($("mfaSetupMsg"), "Gagal memulai MFA: " + error.message, false);
+    enrollId = data.id; $("mfaQr").src = data.totp.qr_code; $("mfaSecret").textContent = data.totp.secret;
+    $("mfaEnroll").hidden = false; $("mfaStart").hidden = true;
+  });
+  $("mfaEnrollForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    const { error } = await sb.auth.mfa.challengeAndVerify({ factorId: enrollId, code: $("mfaEnrollCode").value.trim() });
+    if (error) return say($("mfaSetupMsg"), "Kode salah. Pastikan jam HP akurat lalu coba kode terbaru.", false);
+    $("mfaEnrollCode").value = ""; $("mfaQr").removeAttribute("src"); $("mfaSecret").textContent = "";
+    say($("mfaSetupMsg"), "MFA aktif. Mulai sekarang login admin memakai kode 6 digit.", true); mfaState();
+  });
   $("loginForm").addEventListener("submit", async e => {
     e.preventDefault();
     const { error } = await sb.auth.signInWithPassword({ email: $("email").value, password: $("password").value });

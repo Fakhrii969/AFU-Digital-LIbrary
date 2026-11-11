@@ -34,8 +34,33 @@
       <p id="loginMsg" class="notice" hidden></p>
     </section>
 
+    <section id="mfaBox" class="card form" hidden>
+      <h2>Verifikasi MFA</h2>
+      <p class="muted">Buka aplikasi authenticator (Google Authenticator, Authy, dll.) lalu masukkan kode 6 digit.</p>
+      <form id="mfaForm">
+        <label>Kode 6 digit<input id="mfaCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required></label>
+        <div class="btns"><button class="btn" type="submit">Verifikasi</button><button id="mfaOut" class="btn ghost" type="button">Keluar</button></div>
+      </form>
+      <p id="mfaMsg" class="notice" hidden></p>
+    </section>
+
     <div id="panel" hidden>
       <p class="muted">Masuk sebagai <span id="who"></span> · <button id="logout" class="linkbtn" type="button">Keluar</button></p>
+      <section class="card form" id="mfaSetup">
+        <h2>Keamanan akun (MFA)</h2>
+        <p id="mfaState" class="muted"></p>
+        <button id="mfaStart" class="btn" type="button" hidden>Aktifkan MFA</button>
+        <div id="mfaEnroll" hidden>
+          <p class="hint">Scan QR ini dengan aplikasi authenticator, lalu masukkan kode 6 digit yang muncul.</p>
+          <img id="mfaQr" alt="QR code MFA" width="180" height="180">
+          <p class="hint">Atau ketik manual kode ini: <code id="mfaSecret"></code></p>
+          <form id="mfaEnrollForm">
+            <label>Kode 6 digit<input id="mfaEnrollCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required></label>
+            <button class="btn" type="submit">Verifikasi dan aktifkan</button>
+          </form>
+        </div>
+        <p id="mfaSetupMsg" class="notice" hidden></p>
+      </section>
       <section class="card form" id="formCard">
         <h2 id="formTitle">Tambah dokumen PDF</h2>
         <form id="uploadForm">
