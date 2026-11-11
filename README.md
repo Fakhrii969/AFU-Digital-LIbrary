@@ -40,12 +40,15 @@ supabase/migrasi-v3.sql      UPGRADE dari versi lama
 1. **SQL Editor** → **New query**. Buka `supabase/schema.sql` di VS Code, Ctrl+A, Ctrl+C, paste, **Run**.
 2. Harus muncul "Success". Cek: **Table Editor** ada `documents` dan `site_settings`; **Storage** ada bucket `documents`.
 
-## 3. Akun admin
+## 3. Akun admin dan pendaftaran pengguna
 1. **Authentication → Users → Add user → Create new user** (email + password). Kalau ada kotak *Auto Confirm User*, centang.
-2. Matikan **Allow new users to sign up** di **Authentication → Sign In / Providers** supaya orang lain tidak bisa daftar.
-3. Kalau login nanti "Email not confirmed", jalankan di SQL Editor:
-   `update auth.users set email_confirmed_at = now() where email = 'emailkamu@contoh.com';`
-4. Admin tambahan: ulangi langkah 1. Semua admin punya hak yang sama (termasuk menghapus).
+2. Sejak v5 pengguna biasa mendaftar sendiri (email + sandi), jadi **Allow new users to sign up** harus **menyala** dan **Confirm email** juga menyala.
+3. Admin HANYA akun yang ada di tabel `admins` (bukan semua akun yang login). Cek siapa adminnya:
+   `select u.email from public.admins a join auth.users u on u.id = a.user_id;`
+   Tambah admin: `insert into public.admins select id from auth.users where email = 'email@admin.com';`
+   Cabut admin: `delete from public.admins where user_id = (select id from auth.users where email = 'email@x.com');`
+4. Kalau login admin \"Email not confirmed\", jalankan: `update auth.users set email_confirmed_at = now() where email = 'emailkamu@contoh.com';`
+5. Aktifkan CAPTCHA (Turnstile) di **Authentication → Attack Protection** agar pendaftaran massal sulit.
 
 ## 4. Sambungkan website
 1. **Project Settings → API Keys**: copy **Project URL** dan **Publishable key** (`sb_publishable_...`).
@@ -141,13 +144,14 @@ Gambar: https://... (opsional; atau pakai tombol Unggah gambar)
 
 # G. Asisten AI (v4)
 - **Bawaan (gratis, tanpa server)**: sudah aktif. Menjawab FAQ, mencari dokumen, info hitung mundur, tips, kontak admin.
-- **AI sungguhan (opsional, berbayar per pemakaian)**:
-  1. Install Supabase CLI, `supabase login`, `supabase link --project-ref <ref>`.
-  2. `supabase secrets set ANTHROPIC_API_KEY=sk-ant-...` (key ini TIDAK ditaruh di website).
-  3. `supabase functions deploy afu-assistant --no-verify-jwt`
-  4. Isi `AI_ENDPOINT: "https://<ref>.supabase.co/functions/v1/afu-assistant"` di `js/config.js`, lalu deploy ulang website.
-  5. Model bisa diganti lewat secret `AI_MODEL` (cek nama model terbaru di dokumentasi Anthropic). Batasi `ALLOWED_ORIGIN` ke domainmu.
-  Jika fungsi gagal atau tidak diisi, asisten otomatis kembali ke mode bawaan.
+- **AI sungguhan (Gemini, jatah gratis)**:
+  1. Jalankan `supabase/migrasi-v6.sql` di SQL Editor (batas harian + saringan nama panggilan).
+  2. Edge Functions → `afu-assistant` → tempel isi `supabase/functions/afu-assistant/index.ts` → Deploy. **Verify JWT dimatikan.**
+  3. Secrets: `GEMINI_API_KEY` (wajib), `ALLOWED_ORIGIN` (alamat websitemu), opsional `AI_DAILY_PER_IP` (default 30) dan `AI_DAILY_GLOBAL` (default 400).
+  4. Isi `AI_ENDPOINT` di `js/config.js`. Jika fungsi gagal atau jatah habis, asisten kembali ke mode FAQ.
+
+# G2. Keamanan (v6)
+`_headers` (Cloudflare Pages) berisi CSP dan header pengaman. Kalau menambah skrip atau layanan dari domain baru, tambahkan domainnya ke CSP di `_headers`, kalau tidak browser akan memblokirnya.
 
 # H. File baru v4
 `js/tryout.js` (Try Out + statistik), `js/tryout-import.js` (parser soal admin), `js/assistant.js` (chat), `supabase/migrasi-v4.sql`,

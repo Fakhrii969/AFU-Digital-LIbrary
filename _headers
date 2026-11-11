@@ -1,0 +1,15 @@
+# Header keamanan untuk Cloudflare Pages. Berlaku otomatis setelah file ini ikut ter-deploy.
+# Kalau suatu fitur tiba-tiba mati setelah deploy, hapus file ini dulu untuk mengecek apakah penyebabnya CSP.
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-vIrodBjy/sWPQ+xmKyBAAStNWPcqTzWHlbuR5H+Xs/U=' 'sha256-jMmjvwS0rXYvtos3qa+lfJLa3UPHSOCeiExunKW2Xhs=' https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/ https://cdn.jsdelivr.net/npm/katex@0.16.11/ https://gc.zgo.at/count.js; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net/npm/katex@0.16.11/; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net/npm/katex@0.16.11/; img-src 'self' data: https://*.supabase.co https://*.goatcounter.com; connect-src 'self' https://*.supabase.co https://*.goatcounter.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
+  Strict-Transport-Security: max-age=31536000
+
+/sw.js
+  Cache-Control: no-cache
+
+/admin.html
+  X-Robots-Tag: noindex
