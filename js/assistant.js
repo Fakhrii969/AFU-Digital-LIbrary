@@ -13,11 +13,40 @@
   try { msgs = JSON.parse(sessionStorage.getItem(KEY)) || []; } catch (e) {}
   const save = () => { try { sessionStorage.setItem(KEY, JSON.stringify(msgs.slice(-30))); } catch (e) {} };
 
-  // teks aman -> html: **tebal**, [judul](link), baris baru
-  const render = txt => esc(txt)
-    .replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>")
-    .replace(/\[([^\]]+)\]\(((?:https:\/\/|\/)[^)\s]+)\)/g, (m, a, u) => `<a href="${u}"${u.startsWith("/") ? "" : ' target="_blank" rel="noopener"'}>${a}</a>`)
-    .replace(/\n/g, "<br>");
+  // ---------- rumus matematika (KaTeX, dimuat hanya saat ada rumus) ----------
+  const KV = "0.16.11", KB = "https://cdn.jsdelivr.net/npm/katex@" + KV + "/dist/";
+  let kxState = 0; // 0 belum, 1 memuat, 2 siap, -1 gagal
+  function loadKatex() {
+    if (kxState !== 0) return;
+    kxState = 1;
+    const st = document.createElement("style");
+    st.textContent = ".ai-b .katex{font-size:1.05em}.ai-b .katex-display{margin:.5em 0;overflow-x:auto;overflow-y:hidden}";
+    const l = document.createElement("link"); l.rel = "stylesheet"; l.href = KB + "katex.min.css";
+    const sc = document.createElement("script"); sc.src = KB + "katex.min.js";
+    sc.onload = () => { kxState = 2; if (list) paint(); };
+    sc.onerror = () => { kxState = -1; };
+    document.head.append(st, l, sc);
+  }
+  const MATH = /\$\$([\s\S]+?)\$\$|\\\[([\s\S]+?)\\\]|\\\(([\s\S]+?)\\\)|\$([^$\n]+?)\$/g;
+  const texHtml = (tex, display) => {
+    if (kxState === 2) { try { return window.katex.renderToString(tex.trim(), { displayMode: display, throwOnError: false, output: "html" }); } catch (e) {} }
+    return "<code>" + esc(tex.trim()) + "</code>";
+  };
+
+  // teks aman -> html: rumus, **tebal**, [judul](link), baris baru
+  const render = txt => {
+    const math = [];
+    let src = String(txt).replace(MATH, (m, a, b, c, d) => {
+      const tex = a ?? b ?? c ?? d, display = a !== undefined || b !== undefined;
+      math.push(texHtml(tex, display)); return "\u0001" + (math.length - 1) + "\u0002";
+    });
+    if (math.length) loadKatex();
+    return esc(src)
+      .replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>")
+      .replace(/\[([^\]]+)\]\(((?:https:\/\/|\/)[^)\s]+)\)/g, (m, a, u) => `<a href="${u}"${u.startsWith("/") ? "" : ' target="_blank" rel="noopener"'}>${a}</a>`)
+      .replace(/\n/g, "<br>")
+      .replace(/\u0001(\d+)\u0002/g, (m, i) => math[+i]);
+  };
 
   // ---------- saringan data pribadi (samakan dengan hasPII di supabase/functions/afu-assistant/index.ts) ----------
   const hasPII = s => {
