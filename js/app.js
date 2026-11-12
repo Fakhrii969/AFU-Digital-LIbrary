@@ -270,6 +270,7 @@ if (typeof AFU !== "undefined" && !AFU.TO) {
   }
 
   // ---- Fokus Timer (Pomodoro) ----
+  let baseTitle = document.title, firstRoute = true;
   const PM = { mode: "focus", dur: { focus: 1500, break: 300 }, left: 1500, end: 0, run: false, id: 0 };
   const pmToday = () => { const d = new Date().toLocaleDateString("sv-SE"), v = LS.get("afu-pomo", {}); return v.d === d ? v.n : 0; };
   function beep() {
@@ -284,7 +285,7 @@ if (typeof AFU !== "undefined" && !AFU.TO) {
     const m = String(Math.floor(PM.left / 60)).padStart(2, "0"), sec = String(PM.left % 60).padStart(2, "0");
     if (time) time.textContent = `${m}:${sec}`;
     if (ring) ring.style.strokeDashoffset = String(327 * (1 - PM.left / PM.dur[PM.mode]));
-    document.title = PM.run ? `(${m}:${sec}) AFU Digital Library` : "AFU Digital Library";
+    document.title = PM.run ? `(${m}:${sec}) ${baseTitle}` : baseTitle;
   }
   function pmTick() {
     PM.left = Math.max(0, Math.round((PM.end - Date.now()) / 1000));
@@ -486,8 +487,16 @@ if (typeof AFU !== "undefined" && !AFU.TO) {
     const [type, sub] = location.pathname.split("/").filter(Boolean);
     page = type || "";
     window.scrollTo(0, 0);
+    if (firstRoute) baseTitle = document.title; // halaman statis sudah punya title sendiri
+    else {
+      const nm = { modul: t("nav_modul"), pembahasan: t("nav_pemb"), favorit: t("nav_fav"), tentang: t("nav_about"), tryout: t("nav_to") }[page];
+      const x = sub === "statistik" ? " - " + t("to_tab_stats") : (TYPES[page] && SUB.includes(sub) ? " " + (AFU.ABBR[sub] || sub.toUpperCase()) : "");
+      baseTitle = nm ? `${nm}${x} | AFU Digital Library` : "AFU Digital Library";
+      document.title = baseTitle;
+    }
+    firstRoute = false;
     window.goatcounter?.count?.({ path: location.pathname });
-    document.querySelectorAll(".nav a").forEach(a => a.classList.toggle("on", a.getAttribute("href") === "/" + (page && (TYPES[page] || page === "favorit" || page === "tentang" || page === "tryout") ? page : "")));
+    document.querySelectorAll(".nav a").forEach(a => { const on = a.getAttribute("href") === "/" + (page && (TYPES[page] || page === "favorit" || page === "tentang" || page === "tryout") ? page : ""); a.classList.toggle("on", on); if (on) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
     app.classList.remove("enter"); void app.offsetWidth; app.classList.add("enter");
     updFavN();
     if (page === "favorit") return favPage();
@@ -522,11 +531,14 @@ if (typeof AFU !== "undefined" && !AFU.TO) {
     history.pushState(null, "", a.getAttribute("href"));
     lastPath = location.pathname;
     route();
+
+    app.focus({ preventScroll: true });
   });
   window.addEventListener("popstate", () => {
     if (!AFU.TO.leaving()) { history.pushState(null, "", lastPath); return; }
     lastPath = location.pathname;
     route();
+    app.focus({ preventScroll: true });
   });
   // link lama (/#/modul/pu) diarahkan ke bentuk baru
   if (location.hash.startsWith("#/")) history.replaceState(null, "", location.hash.slice(1));
@@ -547,6 +559,13 @@ if (typeof AFU !== "undefined" && !AFU.TO) {
       up.hidden = h.scrollTop < 700;
     };
     window.addEventListener("scroll", () => { if (!raf) raf = requestAnimationFrame(upd); }, { passive: true });
+    // tombol cari di header (halaman selain beranda): buka beranda lalu fokus ke kolom cari
+    document.getElementById("cmdBtn")?.addEventListener("click", () => {
+      const focusQ = () => { const q = document.getElementById("gq"); if (q) { q.scrollIntoView({ block: "center" }); q.focus(); } return !!q; };
+      if (focusQ() || !AFU.TO.leaving()) return;
+      history.pushState(null, "", "/"); lastPath = "/"; route();
+      let n = 0; const iv = setInterval(() => { if (focusQ() || ++n > 15) clearInterval(iv); }, 100);
+    });
     document.addEventListener("keydown", e => {
       if (e.key !== "/" || e.target.closest("input,textarea,select") || e.metaKey || e.ctrlKey) return;
       const q = document.getElementById("gq"); if (q) { e.preventDefault(); q.focus(); }

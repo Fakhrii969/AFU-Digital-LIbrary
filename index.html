@@ -24,6 +24,7 @@
   <script>document.documentElement.dataset.theme = localStorage.getItem("afu-theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");</script>
 </head>
 <body>
+  <a class="skip" href="#app" data-i18n="skip">Lewati ke konten utama</a>
   <header class="brand hero-brand">
     <div class="brand-bg" aria-hidden="true"></div>
     <div class="wrap">
@@ -52,7 +53,7 @@
   </div>
   <div id="banner" class="banner" hidden></div>
 
-  <main id="app"></main>
+  <main id="app" tabindex="-1"></main>
 
   <footer class="ftr">
     <div class="wrap ftr-grid">
@@ -82,6 +83,7 @@
 
       <!-- BAWAH: hak cipta -->
       <div class="ftr-bot">
+        <nav class="ftr-links" aria-label="Info"><a href="/tentang" data-i18n="nav_about">Tentang</a><a href="/kontak" data-i18n="ct_t">Kontak</a><a href="/privasi" data-i18n="pv_t">Kebijakan Privasi</a></nav>
         <button id="installBtn" class="btn sm" type="button" hidden data-i18n="install">Pasang aplikasi</button>
         <p data-i18n="f_rights">© 2026 AFU Digital Library. All rights reserved.</p>
         <p data-i18n="tagline">Learn Better, Prepare Smarter.</p>

@@ -1,0 +1,4 @@
+# Detail Try Out (/tryout/<id>) dibuat oleh JavaScript, jadi harus memakai halaman /tryout.
+# Urutan penting: aturan pertama yang cocok dipakai.
+/tryout/statistik  /tryout/statistik/index.html  200
+/tryout/*          /tryout/index.html            200

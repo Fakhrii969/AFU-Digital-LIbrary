@@ -9,6 +9,7 @@ const AFU = (() => {
 
   const D = {
     id: {
+      skip: "Lewati ke konten utama", cmd_open: "Cari materi", nf_t: "Halaman tidak ditemukan", nf_p: "Alamatnya mungkin salah ketik atau halamannya sudah dipindah. Yuk kembali ke jalur belajarmu.", nf_home: "Ke beranda",
       nav_home: "Beranda", nav_modul: "Modul Soal", nav_pemb: "Pembahasan", nav_to: "Try Out", nav_fav: "Favorit", nav_about: "Tentang",
       hero_title: "Welcome to Library Digital free by AFU",
       hero_desc: "Ruang digital gratismu untuk belajar, berlatih, dan menyiapkan diri menuju kampus impian.",
@@ -68,6 +69,7 @@ const AFU = (() => {
       q6: "Bisa dipasang seperti aplikasi?", a6: "Bisa. Android (Chrome): menu titik tiga lalu Tambahkan ke layar utama, atau tombol Pasang aplikasi di bawah halaman. iPhone (Safari): tombol Bagikan lalu Tambah ke Layar Utama."
     },
     en: {
+      skip: "Skip to main content", cmd_open: "Search materials", nf_t: "Page not found", nf_p: "The address may have a typo, or the page has moved. Let's get you back to studying.", nf_home: "Go home",
       nav_home: "Home", nav_modul: "Practice Modules", nav_pemb: "Solutions", nav_to: "Mock Tests", nav_fav: "Favorites", nav_about: "About",
       hero_title: "Welcome to Library Digital free by AFU",
       hero_desc: "Your free digital space to learn, practice, and prepare for your dream university.",
@@ -128,7 +130,7 @@ const AFU = (() => {
     }
   };
 
-  let lang = localStorage.getItem("afu-lang") || "id";
+  let lang = "id"; try { lang = localStorage.getItem("afu-lang") || "id"; } catch (e) {}
   const t = (k, ...a) => { const v = D[lang][k]; return typeof v === "function" ? v(...a) : v ?? k; };
 
   function applyStatic() {
@@ -139,10 +141,10 @@ const AFU = (() => {
     if (lb) lb.textContent = lang === "id" ? "ID" : "EN";
   }
   let onChange = () => {};
-  function setLang(l) { lang = l; localStorage.setItem("afu-lang", l); applyStatic(); onChange(); if (typeof paintAcc === "function") paintAcc(); }
+  function setLang(l) { lang = l; try { localStorage.setItem("afu-lang", l); } catch (e) {} applyStatic(); onChange(); if (typeof paintAcc === "function") paintAcc(); }
   function toggleTheme() {
     const n = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
-    document.documentElement.dataset.theme = n; localStorage.setItem("afu-theme", n);
+    document.documentElement.dataset.theme = n; try { localStorage.setItem("afu-theme", n); } catch (e) {}
   }
 
   // efek riak saat tombol/kartu ditekan

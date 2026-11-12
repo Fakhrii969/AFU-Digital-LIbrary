@@ -28,6 +28,7 @@
   <script>document.documentElement.dataset.theme = localStorage.getItem("afu-theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");</script>
 </head>
 <body>
+  <a class="skip" href="#app" data-i18n="skip">Lewati ke konten utama</a>
   <header class="brand hero-brand">
     <div class="brand-bg" aria-hidden="true"></div>
     <div class="wrap">
@@ -49,6 +50,7 @@
         <a href="/" data-i18n="nav_home">Beranda</a>
         <a href="/modul" data-i18n="nav_modul">Modul Soal</a>
         <a href="/pembahasan" data-i18n="nav_pemb">Pembahasan</a>
+        <a href="/tryout"><span data-i18n="nav_to">Try Out</span><span class="nav-new">Baru</span></a>
         <a href="/favorit"><span data-i18n="nav_fav">Favorit</span><span class="cnt" id="favN"></span></a>
         <a href="/tentang" data-i18n="nav_about">Tentang</a>
       </nav>
@@ -56,7 +58,7 @@
   </div>
   <div id="banner" class="banner" hidden></div>
 
-  <main id="app"><!--PRERENDER--><section class="wrap page"><h1>Pembahasan Literasi dalam Bahasa Inggris (LBE)</h1><p>Menguji kemampuan membaca, memahami, dan menafsirkan teks berbahasa Inggris.</p><p><a href="/pembahasan">Pembahasan</a> · <a href="/pembahasan/pu">Penalaran Umum (PU)</a> · <a href="/pembahasan/ppu">Pengetahuan dan Pemahaman Umum (PPU)</a> · <a href="/pembahasan/pbm">Pemahaman Bacaan dan Menulis (PBM)</a> · <a href="/pembahasan/pk">Pengetahuan Kuantitatif (PK)</a> · <a href="/pembahasan/lbi">Literasi dalam Bahasa Indonesia (LBI)</a> · <a href="/pembahasan/lbe">Literasi dalam Bahasa Inggris (LBE)</a> · <a href="/pembahasan/pm">Penalaran Matematika (PM)</a></p></section><!--/PRERENDER--></main>
+  <main id="app" tabindex="-1"><!--PRERENDER--><section class="wrap page"><h1>Pembahasan Literasi dalam Bahasa Inggris (LBE)</h1><p>Menguji kemampuan membaca, memahami, dan menafsirkan teks berbahasa Inggris.</p><p><a href="/pembahasan">Pembahasan</a> · <a href="/pembahasan/pu">Penalaran Umum (PU)</a> · <a href="/pembahasan/ppu">Pengetahuan dan Pemahaman Umum (PPU)</a> · <a href="/pembahasan/pbm">Pemahaman Bacaan dan Menulis (PBM)</a> · <a href="/pembahasan/pk">Pengetahuan Kuantitatif (PK)</a> · <a href="/pembahasan/lbi">Literasi dalam Bahasa Indonesia (LBI)</a> · <a href="/pembahasan/lbe">Literasi dalam Bahasa Inggris (LBE)</a> · <a href="/pembahasan/pm">Penalaran Matematika (PM)</a></p></section><!--/PRERENDER--></main>
 
   <footer class="ftr">
     <div class="wrap ftr-grid">
@@ -99,5 +101,6 @@
   <script src="/js/common.js"></script>
   <script src="/js/tryout.js"></script>
   <script src="/js/app.js"></script>
+  <script src="/js/assistant.js"></script>
 </body>
 </html>
